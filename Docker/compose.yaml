@@ -1,0 +1,25 @@
+name: web-raymarine-prod
+version: '3.8'
+
+services:
+  web-raymarine:
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile
+    image: polisail:web-raymarine
+    container_name: web-raymarine
+    restart: unless-stopped
+    
+    # ESPONIAMO LA PORTA COSÌ
+    ports:
+      - "8080:8080"
+
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+
+    env_file:
+      - ../BE/.env
+
+    working_dir: /app/BE
+    command: [ "npm", "start" ]

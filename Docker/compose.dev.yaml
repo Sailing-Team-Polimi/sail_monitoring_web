@@ -1,0 +1,41 @@
+name: web-raymarine-dev
+version: '3.8'
+
+services:
+  web-workspace:
+    image: node:22-bookworm
+    container_name: web-dev-workspace
+
+    env_file:
+      - ../BE/.env
+    
+    # "Linkiamo" tutta la cartella Web_RayMarine dentro il container
+    # "Linkiamo" tutta la cartella Web_RayMarine dentro il container
+    volumes:
+      - ..:/app
+      - /app/FE/node_modules
+      - /app/BE/node_modules
+    
+    # Apriamo le porte per vedere il risultato sul browser del PC
+    ports:
+      - "4200:4200" # Porta per lo sviluppo rapido di Angular
+      - "8080:8080" # Porta del Backend Node.js
+      
+    working_dir: /app
+    
+    # Questo è il trucco magico: 
+    # 1. Va in FE e installa.
+    # 2. Va in BE e installa.
+    # 3. Resta in vita all'infinito in attesa che tu entri con VS Code.
+    # Questo è il trucco magico aggiornato: 
+    command: >
+      sh -c "
+      echo '⚙️ Installazione Angular CLI globale...' &&
+      npm install -g @angular/cli &&
+      echo '⚙️ Pre-installazione pacchetti Frontend...' && 
+      cd /app/FE && npm install && 
+      echo '⚙️ Pre-installazione pacchetti Backend...' && 
+      cd /app/BE && npm install && 
+      echo '✅ Ambiente pronto! Puoi entrare con VS Code.' && 
+      tail -f /dev/null
+      "
