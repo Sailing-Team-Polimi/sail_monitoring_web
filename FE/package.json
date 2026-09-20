@@ -2,10 +2,11 @@
   "name": "sail-monitoring-web",
   "version": "1.0.0",
   "scripts": {
-    "start": "ng serve --host 127.0.0.1",
+    "start": "ng serve",
     "build": "ng build",
     "test": "node --experimental-transform-types --import ./tests/register.mjs --test tests/*.test.ts",
-    "test:types": "tsc -p tsconfig.spec.json --noEmit"
+    "test:types": "tsc -p tsconfig.spec.json --noEmit",
+    "check": "npm test && npm run test:types && npm run build -- --base-href ./"
   },
   "private": true,
   "dependencies": {

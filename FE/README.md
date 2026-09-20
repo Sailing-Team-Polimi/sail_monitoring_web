@@ -2,8 +2,9 @@
 
 WebApp Angular autonoma per la telemetria e i comandi del team. Mantiene le schermate
 del progetto PoliMiSailGUI e comunica **direttamente con il broker MQTT attraverso WSS**.
-Non richiede un backend Node, un database, Docker o un server ROS nel cloud.
-Node serve soltanto sul PC di sviluppo e in GitHub Actions per compilare il sito.
+Non richiede un backend Node, un database o un server ROS nel cloud.
+Node serve per sviluppo e compilazione: sul PC può girare interamente in Docker.
+Per l'ambiente Docker e gli script di avvio vedere il [README della repository](../README.md).
 
 ```text
 GitHub Pages ── file HTML/CSS/JS ──> browser Angular
@@ -19,12 +20,12 @@ GitHub Pages ── file HTML/CSS/JS ──> browser Angular
 
 - Interfaccia trasferita: login, dashboard, mappa, meccatronica, impostazioni, assetto.
 - Nuovo collegamento MQTT, conversioni dei messaggi e comandi nel frontend.
-- Workflow di verifica e pubblicazione automatica presente in `.github/workflows/pages.yml`.
+- Workflow di verifica e pubblicazione automatica presente in `../.github/workflows/pages.yml`.
 - Broker **non ancora configurato**: la pagina iniziale mostra un messaggio e non tenta connessioni.
 - Nessuna credenziale reale inclusa. Nessun push o deploy remoto eseguito durante la migrazione.
 - Test del protocollo eseguiti con un client simulato; integrazione con broker/ROS da verificare.
-- Compilazione Angular e controllo TypeScript da eseguire dopo l'installazione delle dipendenze:
-  l'installazione locale non è stata autorizzata durante la preparazione.
+- Ambiente Docker predisposto per sviluppo; avvio e compilazione Angular
+  da verificare sul PC. Docker non è stato avviato durante la preparazione, come richiesto.
 
 ## 1. Configurare broker e utenti
 
@@ -112,7 +113,14 @@ Fonti: [accessi HiveMQ](https://docs.hivemq.com/hivemq-cloud/authn-authz.html),
 
 ## 2. Avvio locale e verifiche
 
-Installare **Node.js 24 LTS**, che include npm. Dalla cartella della repository:
+L'ambiente consigliato per questo progetto è Docker: dalla radice della repository
+eseguire `bash Docker/build.sh`. Installa le dipendenze e lascia il container acceso,
+senza avviare Angular. Collegarsi al container con VS Code oppure con
+`docker compose -f Docker/compose.yaml exec web bash`, quindi eseguire `ng serve`
+da `/app/FE`. I comandi sono nel [README principale](../README.md).
+
+In alternativa, per lavorare **senza Docker**, installare **Node.js 24 LTS**, che include npm.
+Dalla cartella `FE/`:
 
 ```sh
 npm install
@@ -144,7 +152,7 @@ La compilazione Angular e `test:types` richiedono invece le dipendenze installat
 
 La repository remota configurata è `Sailing-Team-Polimi/sail_monitoring_web`.
 
-1. Pubblicare i file di questa cartella nel branch **`main`** della repository.
+1. Pubblicare l'intera repository, incluse `FE/`, `Docker/` e `.github/`, nel branch **`main`**.
 2. Su GitHub aprire **Settings → Pages → Build and deployment → Source → GitHub Actions**.
 3. Verificare che le Actions e l'ambiente `github-pages` siano consentiti dalle impostazioni
    dell'organizzazione. Con GitHub Free, Pages richiede una repository pubblica.

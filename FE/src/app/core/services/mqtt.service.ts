@@ -1,12 +1,12 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { connect } from 'mqtt';
+import mqtt from 'mqtt';
 import { APP_CONFIG } from '../mqtt/app-config';
 import { MqttSession } from '../mqtt/mqtt-session';
 
 @Injectable({providedIn: 'root'})
 export class MqttService extends MqttSession implements OnDestroy {
   constructor() {
-    super((url, options) => connect(url, options), APP_CONFIG);
+    super((url, options) => mqtt.connect(url, options), APP_CONFIG);
     window.addEventListener('pagehide', this.onPageHide);
   }
   private readonly onPageHide = () => this.logout();

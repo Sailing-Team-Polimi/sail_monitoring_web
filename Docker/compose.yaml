@@ -1,25 +1,29 @@
-name: web-raymarine-prod
-version: '3.8'
+name: sail-monitoring-dev
 
 services:
-  web-raymarine:
+  web:
     build:
       context: ..
       dockerfile: Docker/Dockerfile
-    image: polisail:web-raymarine
-    container_name: web-raymarine
-    restart: unless-stopped
-    
-    # ESPONIAMO LA PORTA COSÌ
+    init: true
     ports:
-      - "8080:8080"
+      - "127.0.0.1:4200:4200"
+    volumes:
+      - ../FE:/app/FE
+      - node_modules:/app/FE/node_modules
+      - angular_cache:/app/FE/.angular
+      - build_output:/app/FE/dist
+      - npm_cache:/root/.npm
+    healthcheck:
+      # Ready means dependencies are installed; Angular is started manually.
+      test: ["CMD", "test", "-f", "/tmp/sail-dev-ready"]
+      interval: 5s
+      timeout: 5s
+      start_period: 180s
+      retries: 60
 
-    environment:
-      - NODE_ENV=production
-      - PORT=8080
-
-    env_file:
-      - ../BE/.env
-
-    working_dir: /app/BE
-    command: [ "npm", "start" ]
+volumes:
+  node_modules:
+  angular_cache:
+  build_output:
+  npm_cache:

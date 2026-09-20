@@ -1,4 +1,4 @@
-@if ((dashboardData$ | async)?.ROLL && (sensorData$ | async)?.HEIGHT_TARGET && (indicatorState$ | async)) {
+@if ((dashboardData$ | async)?.['ROLL'] != null && (sensorData$ | async)?.['HEIGHT_TARGET'] != null && (indicatorState$ | async)) {
 <main class="visualization-page">
   @if (dashboardData$ | async; as dashboard) {
     <div class="visualization-grid">

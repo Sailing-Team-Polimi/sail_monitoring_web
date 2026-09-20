@@ -17,6 +17,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: FE
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,7 +42,7 @@ jobs:
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/sail-monitoring-web/browser
+          path: FE/dist/sail-monitoring-web/browser
 
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'

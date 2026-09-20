@@ -2,7 +2,7 @@ import { AuthRoles } from '../../dtos/auth/auth-roles';
 
 // PUBLIC configuration: these values are shipped to every browser. No passwords here.
 export const APP_CONFIG = {
-  brokerUrl: '', // Example: wss://YOUR-CLUSTER.s1.eu.hivemq.cloud:8884/mqtt
+  brokerUrl: 'wss://9b6cb923ef4f4f61975ac4342b2a3cbc.s1.eu.hivemq.cloud:8884/mqtt',
   users: {
     guest: AuthRoles.Guest,
     operator: AuthRoles.Admin,
