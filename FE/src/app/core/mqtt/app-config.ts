@@ -5,7 +5,10 @@ export const APP_CONFIG = {
   brokerUrl: 'wss://9b6cb923ef4f4f61975ac4342b2a3cbc.s1.eu.hivemq.cloud:8884/mqtt',
   users: {
     guest: AuthRoles.Guest,
+    Guest: AuthRoles.Guest,
     operator: AuthRoles.Admin,
+    Staff: AuthRoles.Admin,
+    staff: AuthRoles.Admin,
   } as Record<string, AuthRoles>,
   connectTimeoutMs: 12000,
   reconnectMs: 5000,

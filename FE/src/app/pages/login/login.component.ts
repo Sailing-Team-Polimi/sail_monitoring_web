@@ -8,8 +8,8 @@ import { APP_CONFIG } from '../../core/mqtt/app-config';
   templateUrl: './login.component.html', styleUrl: './login.component.scss',
 })
 export class LoginComponent {
-  username = '';
-  password = '';
+  username = 'Guest';
+  password = 'Guest1234';
   errorMsg = '';
   isLoading = false;
   readonly configured = Boolean(APP_CONFIG.brokerUrl);
