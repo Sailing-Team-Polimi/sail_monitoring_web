@@ -1,0 +1,22 @@
+<div class="w-full h-full flex flex-col items-center justify-center p-2">
+  <form class="login-form" (ngSubmit)="onSubmit()">
+    <img src="assets/logos/polimisailing.png" class="login-logo" alt="Polimi Sailing Team" />
+    <h2 class="login-title">PoliMi Sailing Team</h2>
+    @if (!configured) {
+      <p class="text-amber-300 text-sm mb-4" role="status">Collegamento alla barca non ancora configurato. Contatta il responsabile del team.</p>
+    }
+    <div class="login-input-group">
+      <label for="username" class="login-label">Nome utente</label>
+      <input id="username" name="username" autocomplete="username" required [(ngModel)]="username" class="text-input" [disabled]="isLoading" />
+    </div>
+    <div class="login-input-group">
+      <label for="password" class="login-label">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required [(ngModel)]="password" class="text-input" [disabled]="isLoading" />
+      @if (errorMsg) { <p class="login-error" role="alert">{{ errorMsg }}</p> }
+    </div>
+    <button type="submit" [disabled]="isLoading || !configured || !username || !password" class="login-button">
+      {{ isLoading ? 'Connessione…' : 'ACCEDI' }}
+    </button>
+    <p class="text-gray-400 text-xs mt-4">Usa le credenziali ricevute dal team. Alla chiusura della pagina sarà necessario accedere di nuovo.</p>
+  </form>
+</div>

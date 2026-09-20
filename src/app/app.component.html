@@ -1,0 +1,21 @@
+<div class="min-h-screen flex flex-col w-full h-[100dvh]">
+  <div class="app-container pt-[clamp(0.5rem, 2vh, 2.5rem)] gap-[clamp(0.5rem, 1vw, 1rem)]">
+
+    @if(isLoggedIn()) {
+    <app-header [authRole]="authRole()" (logout)="onLogout()" />
+    }
+
+    @if (feedback()) {
+      <p class="bg-slate-800 text-slate-200 px-4 py-2 rounded text-sm" role="status" aria-live="polite">{{ feedback() }}</p>
+    }
+    @if (isLoggedIn() && !dashboard()) {
+      <p class="bg-amber-950 text-amber-200 px-4 py-2 rounded text-sm" role="status">Dati di navigazione non disponibili o non aggiornati. In attesa della barca.</p>
+    }
+
+    <!-- Contenuto Principale -->
+    <main class="flex-1 flex flex-col h-full min-h-0 overflow-y-auto">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+</div>

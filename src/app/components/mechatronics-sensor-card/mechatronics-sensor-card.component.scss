@@ -1,0 +1,23 @@
+:host {
+  display: block;
+}
+
+.mechatronics-sensor-container {
+  @apply flex min-w-0 items-end justify-center;
+}
+
+.mechatronics-sensor-value {
+  @apply max-w-full font-bold text-white leading-none;
+  overflow-wrap: anywhere;
+  font-size: clamp(0.6rem, 6vmin, 3rem);
+}
+
+.mechatronics-sensor-unit {
+  @apply text-gray-300 ml-1;
+  font-size: clamp(0.6rem, 6vmin, 3rem);
+}
+
+.mechatronics-sensor-error {
+  @apply font-bold text-red-500 leading-none;
+  font-size: clamp(0.7rem, 5vmin, 1.8rem);
+}

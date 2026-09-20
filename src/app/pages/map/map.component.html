@@ -1,0 +1,66 @@
+<div class="map-layout-wrapper">
+
+  <div class="map-section">
+    <div class="map-inner-container">
+
+      <div class="wind-overlay">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="wind-icon"
+             [style.transform]="'rotate(' + ((twd + 180) % 360) + 'deg)'"
+             fill="currentColor"
+             viewBox="0 0 24 24">
+          <path d="M12 2l7 7h-4v9h-6V9H5l7-7z" />
+        </svg>
+        <span class="wind-text">
+          {{ tws }} kn
+        </span>
+      </div>
+
+      <div class="dtl-overlay">
+        <span class="dtl-label">DTL:</span>
+        <span class="dtl-value" [class.invalid]="dtl === -1">
+          {{ dtl !== -1 && dtl !== null ? (dtl | number:'1.0-1') + ' m' : '--' }}
+        </span>
+      </div>
+
+      <div id="map" class="leaflet-map-wrapper"></div>
+    </div>
+  </div>
+
+  <div class="control-panel">
+
+    <button (click)="resetTrack()"
+            [disabled]="!commands.canSetMark()"
+            class="btn-danger">
+      RESET TRACK
+    </button>
+
+    <button (click)="drawLine()"
+            [disabled]="!commands.canSetMark()"
+            class="btn-primary">
+      DRAW
+    </button>
+
+    <button (click)="pingBoa()"
+            [disabled]="!commands.canSetMark()"
+            class="btn-primary">
+      PING
+    </button>
+
+    <form class="form-wrapper">
+      <select id="mark types"
+              [(ngModel)]="selectedMarkType"
+              name="markTypeSelect"
+              [disabled]="!commands.canSetMark()"
+              class="select-action">
+        @for (type of markTypes | keyvalue; track type) {
+          <option [value]="type.value">{{ type.value }}</option>
+        }
+      </select>
+    </form>
+
+  </div>
+</div>
+@if (!commands.canSetMark()) {
+  <p class="text-amber-300 p-2 text-sm" role="status">Posizione non aggiornata: la mappa può mostrare l’ultima posizione ricevuta. Comandi disabilitati.</p>
+}

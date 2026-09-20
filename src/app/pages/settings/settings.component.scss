@@ -1,0 +1,78 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden; 
+}
+
+.settings-page {
+  /* Modificato: da justify-center a justify-start */
+  @apply h-full w-full min-h-0 flex flex-col justify-start;
+  padding: clamp(0.2rem, 1vmin, 1rem) 0;
+}
+
+.settings-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 h-full w-full min-h-0;
+  gap: clamp(0.5rem, 2vmin, 1rem);
+}
+
+.settings-panel {
+  @apply flex flex-col min-h-0 overflow-hidden border border-gray-700 rounded-lg bg-gray-800/50;
+}
+
+.settings-panel-header {
+  /* Modificato: da justify-center a justify-start */
+  @apply flex flex-col h-full min-h-0 justify-start;
+  gap: clamp(0.2rem, 1.5vmin, 0.75rem);
+  padding: clamp(0.2rem, 1.5vmin, 1rem);
+}
+
+.settings-panel-title {
+  @apply font-bold text-white;
+  margin-bottom: clamp(0.1rem, 1vmin, 0.5rem);
+  font-size: clamp(0.8rem, 3.5vmin, 2.5rem);
+}
+
+.settings-row {
+  @apply flex justify-between items-center min-h-0;
+}
+
+.settings-label {
+  @apply text-gray-300;
+  font-size: clamp(0.7rem, 2.5vmin, 2rem);
+}
+
+.settings-value {
+  @apply font-bold text-white inline-block scale-75 origin-center;
+}
+
+.settings-actions {
+  @apply flex gap-2 items-center;
+}
+
+.settings-btn {
+  @apply bg-gray-700 rounded font-bold text-white hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center;
+  /* Alzati da 1.5rem a 3.5rem e aggiunto il resize del font per i segni + e - */
+  width: clamp(1.2rem, 4vmin, 3.5rem);
+  height: clamp(1.2rem, 4vmin, 3.5rem);
+  font-size: clamp(1rem, 3vmin, 2.5rem);
+}
+
+.settings-test-row {
+  @apply flex justify-between items-center border-gray-700 min-h-0;
+  /* Alzato per dare spazio sul tablet */
+  height: clamp(30px, 12vmin, 120px);
+  padding: clamp(0.1rem, 1vmin, 1.5rem) 0;
+}
+
+.settings-test-label {
+  /* Alzato da 1.125rem a 2rem */
+  font-size: clamp(0.7rem, 2.5vmin, 2rem);
+}
+
+.settings-test-btn {
+  @apply rounded-md font-semibold bg-gray-700 text-white border border-gray-500 hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+  /* Alzati padding e font-size per farli crescere col tablet */
+  padding: clamp(0.2rem, 1.5vmin, 1.5rem) clamp(0.4rem, 2vmin, 2.5rem);
+  font-size: clamp(0.6rem, 2.5vmin, 1.5rem);
+}

@@ -1,0 +1,57 @@
+:host {
+  display: block;
+  /* Questo blocca lo scroll della pagina intera */
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.visualization-page {
+  @apply h-full w-full min-h-0 overflow-hidden flex flex-col;
+}
+
+.visualization-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 text-gray-300 h-full w-full min-h-0;
+}
+
+.visualization-box {
+  @apply h-full flex items-center justify-center min-h-0;
+  /* Margini dinamici al posto del pt-15 fisso */
+  padding: clamp(0.5rem, 2vmin, 1.5rem); 
+}
+
+.visualization-content {
+  /* NIENTE PIÙ aspect-square! Usiamo h-full per fargli prendere l'altezza disponibile */
+  @apply w-full max-w-[420px] h-full flex flex-col items-center justify-center min-h-0;
+  gap: clamp(0.2rem, 1.5vmin, 0.75rem);
+}
+
+.visualization-canvas {
+  /* flex-1 fa in modo che l'immagine si rimpicciolisca senza farsi tagliare */
+  @apply relative w-full flex-1 flex items-center justify-center overflow-hidden min-h-0;
+}
+
+.water-area {
+  @apply absolute left-0 right-0 bottom-0 top-[84%] z-0 bg-sky-300/10;
+}
+
+.horizon-line {
+  @apply absolute left-0 right-0 top-[84%] z-20 h-[1px] bg-sky-300 opacity-80;
+}
+
+.boat-img {
+  @apply relative z-10 w-full h-full object-contain transition-transform duration-150 ease-linear;
+  transform-origin: 50% 84%;
+}
+
+.vertical-axis {
+  @apply absolute top-0 bottom-0 left-1/2 -translate-x-1/2 z-20 w-[1px] bg-red-500 opacity-70;
+}
+
+.angle-label {
+  @apply absolute right-3 top-3 z-30 rounded-md bg-black/45 px-2 py-1 text-sm font-semibold text-white;
+}
+
+.sensor-title {
+  @apply mt-2 text-base font-semibold tracking-wider text-gray-300;
+}

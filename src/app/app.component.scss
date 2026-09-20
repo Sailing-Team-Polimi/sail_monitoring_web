@@ -1,0 +1,14 @@
+:host {
+  display: block;
+  width: 100%;
+  min-height: 100dvh;
+  background: #010204;
+}
+
+main {
+  overflow-y: auto;
+}
+
+.app-container {
+  @apply relative flex flex-col flex-1 min-h-0 text-white overflow-hidden bg-gradient-to-b from-[#010204] via-[#0a0c12] to-[#12131a] p-3;
+}

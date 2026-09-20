@@ -1,0 +1,38 @@
+<app-generic-sensor-card
+  [cardClass]="cardClass"
+  [title]="title"
+  [value]="value"
+  [unit]="unit"
+  [failed]="failed"
+>
+  @if (!failed) {
+    <div class="yaw-container">
+      
+      <!-- Bussola -->
+      <div class="compass-circle">
+        <span class="compass-label compass-label-n">N</span>
+        <span class="compass-label compass-label-s">S</span>
+        <span class="compass-label compass-label-e">E</span>
+        <span class="compass-label compass-label-w">W</span>
+        
+        <div
+          class="compass-icon-wrapper"
+          [ngStyle]="{ transform: 'rotate(' + displayAngle + 'deg)' }"
+        >
+          <span class="compass-icon material-icons">navigation</span>
+        </div>
+      </div>
+
+      <!-- Testo (Valore + Unità) -->
+      <div class="yaw-data-wrapper">
+        <span class="yaw-value">
+          {{ value | number:'1.0-1' }}
+        </span>
+        <span class="yaw-unit">
+          {{ unit }}
+        </span>
+      </div>
+
+    </div>
+  }
+</app-generic-sensor-card>

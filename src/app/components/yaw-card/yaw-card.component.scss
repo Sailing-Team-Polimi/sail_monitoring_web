@@ -1,0 +1,67 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* --- LAYOUT PRINCIPALE --- */
+.yaw-container {
+  @apply flex h-full w-full min-w-0 items-center justify-around;
+  gap: clamp(0.5rem, 2vw, 1.5rem);
+  padding: 0 clamp(0.2rem, 1.5vw, 1rem);
+  margin-top: clamp(0.2rem, 1.5vw, 1rem);
+}
+
+/* --- BUSSOLA --- */
+.compass-circle {
+  @apply relative flex shrink-0 items-center justify-center rounded-full border-2 border-gray-600/50;
+  /* Ridotto il vw, aumentato il range */
+  width: clamp(2.5rem, 8vw, 12rem);
+  height: clamp(2.5rem, 8vw, 12rem);
+}
+
+.compass-icon-wrapper {
+  @apply flex h-full w-full items-center justify-center;
+  transition: transform 0.3s ease-in-out;
+}
+
+.compass-icon {
+  @apply text-blue-400 drop-shadow-lg;
+  font-size: clamp(1.5rem, 5vw, 7rem);
+}
+
+.compass-label {
+  position: absolute;
+  color: #9ca3af;
+  font-weight: 700;
+  line-height: 1;
+  font-size: clamp(0.5rem, 1vw, 2rem); 
+}
+
+.compass-label-n { top: calc(-1 * clamp(0.5rem, 2vw, 1.5rem)); }
+.compass-label-s { bottom: calc(-1 * clamp(0.5rem, 2vw, 1.5rem)); }
+.compass-label-e { right: calc(-1 * clamp(0.5rem, 2vw, 1.2rem)); }
+.compass-label-w { left: calc(-1 * clamp(0.5rem, 2vw, 1.2rem)); }
+
+/* --- TESTI (VALORE E UNITA') --- */
+.yaw-data-wrapper {
+  @apply flex min-w-0 items-baseline;
+  margin-bottom: clamp(0.1rem, 1vw, 0.5rem);
+}
+
+/* --- TESTI (VALORE E UNITA') --- */
+.yaw-value {
+  @apply max-w-full font-bold leading-none text-white;
+  overflow-wrap: anywhere;
+  /* Allineato con generic-sensor-value */
+  font-size: clamp(1.2rem, 6vw, 9rem); 
+}
+
+.yaw-unit {
+  @apply shrink-0 font-semibold leading-none text-gray-400;
+  margin-left: clamp(0.2rem, 1vw, 0.75rem);
+  /* Allineato con generic-sensor-unit */
+  
+  font-size: clamp(0.7rem, 2.5vw, 4rem); 
+}

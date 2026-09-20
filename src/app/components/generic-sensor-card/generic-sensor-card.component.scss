@@ -1,0 +1,44 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.generic-sensor-card {
+  @apply flex h-full min-h-0 w-full min-w-0 flex-col items-center justify-center overflow-hidden border border-[#4E4865] bg-white/5 text-center;
+  border-radius: clamp(0.25rem, 1.5vmin, 0.75rem);
+  padding: clamp(0.1rem, 1.5vmin, 1rem);
+}
+
+.generic-sensor-title {
+  @apply font-medium leading-tight text-white;
+  margin-bottom: clamp(0.1rem, 1vmin, 0.5rem);
+  /* Moltiplicatore abbassato, max alzato per schermi grandi */
+  font-size: clamp(0.7rem, 1.5vw, 2.5rem); 
+}
+
+.generic-sensor-content {
+  @apply flex max-w-full min-w-0 items-end justify-center;
+}
+
+.generic-sensor-value {
+  @apply max-w-full font-bold leading-none text-white;
+  overflow-wrap: anywhere;
+  /* Su mobile parte da 1.2rem, scala dolcemente (3.5vw) e arriva fino a 6rem su desktop */
+  font-size: clamp(1.2rem, 6vw, 9rem); 
+}
+
+.generic-sensor-unit {
+  @apply shrink-0 leading-none text-gray-300;
+  margin-left: clamp(0.1rem, 0.5vmin, 0.35rem);
+  margin-bottom: clamp(0.1rem, 1vmin, 1.25rem);
+  /* Ridotto l'impatto del vw e aumentato il limite massimo */
+  font-size: clamp(0.7rem, 2.5vw, 4rem); 
+}
+
+.generic-sensor-error {
+  @apply max-w-full font-bold leading-tight text-red-500;
+  overflow-wrap: anywhere;
+  font-size: clamp(0.8rem, 2.5vw, 1.5rem);
+}

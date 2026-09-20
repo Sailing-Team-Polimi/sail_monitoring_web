@@ -1,0 +1,48 @@
+@if ((dashboardData$ | async)?.ROLL && (sensorData$ | async)?.HEIGHT_TARGET && (indicatorState$ | async)) {
+<main class="visualization-page">
+  @if (dashboardData$ | async; as dashboard) {
+    <div class="visualization-grid">
+      @if ({ sensor: sensorData$ | async, state: indicatorState$ | async }; as vm) {
+        <div class="visualization-box border-r border-gray-700">
+          <div class="visualization-content">
+            <div class="visualization-canvas">
+              <div class="water-area"></div>
+              <div class="horizon-line"></div>
+              <img
+                src="assets/svg/moth_front_view.svg"
+                alt="Front boat view"
+                class="boat-img"
+                [style.transform]="'translateY(' + (-(clampHeight(getActiveHeightValue(vm.sensor, vm.state)) / totalHeight) * 100) + '%) rotate(' + clampAngle(getRollValue(dashboard)) + 'deg)'"
+                />
+              <div class="vertical-axis"></div>
+              <div class="angle-label">
+                {{ clampAngle(getRollValue(dashboard)) | number:'1.0-1' }}°
+              </div>
+            </div>
+            <div class="sensor-title">ROLL</div>
+          </div>
+        </div>
+        <div class="visualization-box">
+          <div class="visualization-content">
+            <div class="visualization-canvas">
+              <div class="water-area"></div>
+              <div class="horizon-line"></div>
+              <img
+                src="assets/svg/moth_side_view.svg"
+                alt="Side boat view"
+                class="boat-img"
+                [style.transform]="'translateY(' + (-(clampHeight(getActiveHeightValue(vm.sensor, vm.state)) / totalHeight) * 100) + '%) rotate(' + clampAngle(getPitchValue(dashboard)) + 'deg)'"
+                />
+              <div class="vertical-axis"></div>
+              <div class="angle-label">
+                {{ clampAngle(getPitchValue(dashboard)) | number:'1.0-1' }}°
+              </div>
+            </div>
+            <div class="sensor-title">PITCH</div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</main>
+} @else { <p class="text-amber-300 p-6" role="status">Assetto non disponibile: in attesa di dati aggiornati dalla barca.</p> }

@@ -1,0 +1,26 @@
+<div [ngClass]="['generic-sensor-card', cardClass]">
+  <h3 class="generic-sensor-title">
+    {{ title }}
+  </h3>
+
+  @if (!failed) {
+    @if (hasCustomContent) {
+      <ng-content></ng-content>
+    }
+    @if (!hasCustomContent) {
+      <div class="generic-sensor-content">
+        <span class="generic-sensor-value">
+          {{ value | number:'1.0-2' }}
+        </span>
+        <span class="generic-sensor-unit">
+          {{ unit }}
+        </span>
+      </div>
+    }
+  } @else {
+    <div class="generic-sensor-error">
+      Dato non disponibile
+    </div>
+  }
+
+</div>

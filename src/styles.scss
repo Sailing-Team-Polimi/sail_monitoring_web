@@ -1,0 +1,31 @@
+/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Material Icons';
+  src: url('./assets/fonts/material-icons/MaterialIcons-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.material-icons {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Stile riusabile per bottoni disabilitati (da usare in HTML come class="btn-disabled") */
+@layer components {
+  .btn-disabled {
+    @apply opacity-40 cursor-not-allowed grayscale pointer-events-none;
+  }
+
+  .text-input {
+    @apply w-full bg-[#0a0c12] text-white px-4 py-3 rounded-md border border-gray-700 focus:outline-none focus:border-blue-500 transition-colors
+  }
+}

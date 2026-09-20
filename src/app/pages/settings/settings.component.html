@@ -1,0 +1,123 @@
+@if (mqttState$ | async; as mqttState) {
+  @if ({ sensorData: sensorData$ | async, activeSensor: activeSensor$ | async, actuationMode: actuationMode$ | async }; as vm) {
+    <main class="settings-page">
+      <div class="settings-grid text-gray-300">
+        
+        <div class="settings-panel">
+          <div class="settings-panel-header">
+            <h2 class="settings-panel-title">Sensore PID Attivo</h2>
+
+            <div class="flex justify-center w-full mt-6 mb-4">
+              <div class="inline-flex rounded-md shadow-lg" role="group">
+                <button type="button"
+                  [disabled]="!commands.canUpdate() || vm.activeSensor === null || vm.activeSensor === ActiveSensor.WAND"
+                  (click)="changeActiveSensor()"
+                  [ngClass]="vm.activeSensor === ActiveSensor.WAND ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-800 text-gray-400 border-gray-600 hover:bg-gray-700'"
+                  class="px-8 py-3 text-sm font-bold tracking-wider border border-gray-600 rounded-l-lg focus:outline-none transition-all duration-300">
+                  WAND
+                </button>
+                <button type="button"
+                  [disabled]="!commands.canUpdate() || vm.activeSensor === null || vm.activeSensor === ActiveSensor.ULTRASOUND"
+                  (click)="changeActiveSensor()"
+                  [ngClass]="vm.activeSensor === ActiveSensor.ULTRASOUND ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-800 text-gray-400 border-gray-600 hover:bg-gray-700'"
+                  class="px-8 py-3 text-sm font-bold tracking-wider border border-gray-600 border-l-0 rounded-r-lg focus:outline-none transition-all duration-300">
+                  ULTRASOUND
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <div class="settings-panel-header">
+            <h2 class="settings-panel-title">Modalita Attuazione Flap</h2>
+
+            <div class="flex justify-center w-full mt-6 mb-4">
+              <div class="inline-flex rounded-md shadow-lg" role="group">
+                <button type="button"
+                  [disabled]="!commands.canUpdate() || vm.actuationMode === null || vm.actuationMode === ActuationMode.PUSH"
+                  (click)="changeActuationMode()"
+                  [ngClass]="vm.actuationMode === ActuationMode.PUSH ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-800 text-gray-400 border-gray-600 hover:bg-gray-700'"
+                  class="px-8 py-3 text-sm font-bold tracking-wider border border-gray-600 rounded-l-lg focus:outline-none transition-all duration-300">
+                  PUSH
+                </button>
+                <button type="button"
+                  [disabled]="!commands.canUpdate() || vm.actuationMode === null || vm.actuationMode === ActuationMode.PULL"
+                  (click)="changeActuationMode()"
+                  [ngClass]="vm.actuationMode === ActuationMode.PULL ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-800 text-gray-400 border-gray-600 hover:bg-gray-700'"
+                  class="px-8 py-3 text-sm font-bold tracking-wider border border-gray-600 border-l-0 rounded-r-lg focus:outline-none transition-all duration-300">
+                  PULL
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <div class="settings-panel-header">
+            <h2 class="settings-panel-title">Configurazione Limiti</h2>
+            <div class="settings-row">
+              <span class="settings-label">Servo Limit Max</span>
+              <span class="settings-value">
+                <app-mechatronics-sensor-card
+                  [value]="vm.sensorData?.SERVO_LIMIT_MAX?.value ?? 0"
+                  [unit]="vm.sensorData?.SERVO_LIMIT_MAX?.unit"
+                  [failed]="vm.sensorData?.SERVO_LIMIT_MAX?.failed ?? true"
+                ></app-mechatronics-sensor-card>
+              </span>
+              <div class="settings-actions">
+                <button class="settings-btn"
+                  [disabled]="!commands.canUpdate()"
+                  (click)="updateIndicator(IndicatorType.SERVO_LIMIT_MAX, MethodType.INCREASE)">+</button>
+                <button class="settings-btn"
+                  [disabled]="!commands.canUpdate()"
+                  (click)="updateIndicator(IndicatorType.SERVO_LIMIT_MAX, MethodType.DECREASE)">-</button>
+              </div>
+            </div>
+            <div class="settings-row">
+              <span class="settings-label">Servo Limit Min</span>
+              <span class="settings-value">
+                <app-mechatronics-sensor-card
+                  [value]="vm.sensorData?.SERVO_LIMIT_MIN?.value ?? 0"
+                  [unit]="vm.sensorData?.SERVO_LIMIT_MIN?.unit"
+                  [failed]="vm.sensorData?.SERVO_LIMIT_MIN?.failed ?? true"
+                ></app-mechatronics-sensor-card>
+              </span>
+              <div class="settings-actions">
+                <button class="settings-btn"
+                  [disabled]="!commands.canUpdate()"
+                  (click)="updateIndicator(IndicatorType.SERVO_LIMIT_MIN, MethodType.INCREASE)">+</button>
+                <button class="settings-btn"
+                  [disabled]="!commands.canUpdate()"
+                  (click)="updateIndicator(IndicatorType.SERVO_LIMIT_MIN, MethodType.DECREASE)">-</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <div class="settings-panel-header">
+            <h2 class="settings-panel-title">Test Flap</h2>
+            <div class="settings-test-row">
+              <span class="settings-test-label">Test Flap Max (+ Offset)</span>
+              <button class="settings-test-btn"
+                [disabled]="!commands.canTest()"
+                (click)="sendTestCommand(TestFlapCommand.FLAP_MAX)">
+                TEST MAX
+              </button>
+            </div>
+            <div class="settings-test-row border-none">
+              <span class="settings-test-label">Test Flap Min (+ Offset)</span>
+              <button class="settings-test-btn"
+                [disabled]="!commands.canTest()"
+                (click)="sendTestCommand(TestFlapCommand.FLAP_MIN)">
+                TEST MIN
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  }
+}

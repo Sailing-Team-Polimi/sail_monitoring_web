@@ -1,0 +1,13 @@
+<div class="mechatronics-sensor-container">
+  @if (!failed) {
+    <span class="mechatronics-sensor-value">
+      {{ value | number : "1.0-2" }}
+    </span>
+    <span class="mechatronics-sensor-unit">
+      {{ unit }}
+    </span>
+  } @else {
+    <span class="mechatronics-sensor-error"> — </span>
+  }
+
+</div>

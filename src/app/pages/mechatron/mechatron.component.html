@@ -1,0 +1,158 @@
+@if (mqttState$ | async; as mqttState) {
+  @if ({ 
+    sensorData: sensorData$ | async, 
+    indicatorState: indicatorState$ | async,
+    activeSensor: activeSensor$ | async 
+  }; as vm) {
+    <main class="mechatron-page">
+      <div class="mechatron-grid text-gray-300 border-t border-l border-gray-700">
+        
+        <div class="mechatron-column mechatron-left-column border-r border-b border-gray-700">
+          <div class="mechatron-panel mechatron-pid-panel border-b border-gray-700">
+            <div class="mechatron-row">
+              <span class="mechatron-label">KP</span>
+              <span class="mechatron-pid-value">
+                <app-mechatronics-sensor-card
+                  [value]="vm.sensorData?.KP?.value ?? 0"
+                  [unit]="vm.sensorData?.KP?.unit"
+                  [failed]="vm.sensorData?.KP?.failed ?? true"
+                ></app-mechatronics-sensor-card>
+              </span>
+              <div class="mechatron-pid-actions">
+                <span class="mechatron-limit-label" [class.font-bold]="!vm.indicatorState?.[IndicatorType.KP]?.canIncrease" [class.text-red-400]="!vm.indicatorState?.[IndicatorType.KP]?.canIncrease">max</span>
+                <span class="mechatron-limit-label" [class.font-bold]="!vm.indicatorState?.[IndicatorType.KP]?.canDecrease" [class.text-blue-400]="!vm.indicatorState?.[IndicatorType.KP]?.canDecrease">min</span>
+                <button class="mechatron-step-button" [disabled]="!commands.canUpdate() || !vm.indicatorState?.[IndicatorType.KP]?.canIncrease" (click)="updateIndicator(IndicatorType.KP, MethodType.INCREASE)">+</button>
+                <button class="mechatron-step-button" [disabled]="!commands.canUpdate() || !vm.indicatorState?.[IndicatorType.KP]?.canDecrease" (click)="updateIndicator(IndicatorType.KP, MethodType.DECREASE)">-</button>
+              </div>
+            </div>
+            <div class="mechatron-row">
+              <span class="mechatron-label">KI</span>
+              <span class="mechatron-pid-value">
+                <app-mechatronics-sensor-card
+                  [value]="vm.sensorData?.KI?.value ?? 0"
+                  [unit]="vm.sensorData?.KI?.unit"
+                  [failed]="vm.sensorData?.KI?.failed ?? true"
+                ></app-mechatronics-sensor-card>
+              </span>
+              <div class="mechatron-pid-actions">
+                <span class="mechatron-limit-label" [class.font-bold]="!vm.indicatorState?.[IndicatorType.KI]?.canIncrease" [class.text-red-400]="!vm.indicatorState?.[IndicatorType.KI]?.canIncrease">max</span>
+                <span class="mechatron-limit-label" [class.font-bold]="!vm.indicatorState?.[IndicatorType.KI]?.canDecrease" [class.text-blue-400]="!vm.indicatorState?.[IndicatorType.KI]?.canDecrease">min</span>
+                <button class="mechatron-step-button" [disabled]="!commands.canUpdate() || !vm.indicatorState?.[IndicatorType.KI]?.canIncrease" (click)="updateIndicator(IndicatorType.KI, MethodType.INCREASE)">+</button>
+                <button class="mechatron-step-button" [disabled]="!commands.canUpdate() || !vm.indicatorState?.[IndicatorType.KI]?.canDecrease" (click)="updateIndicator(IndicatorType.KI, MethodType.DECREASE)">-</button>
+              </div>
+            </div>
+            <div class="mechatron-row">
+              <span class="mechatron-label">KD</span>
+              <span class="mechatron-pid-value">
+                <app-mechatronics-sensor-card
+                  [value]="vm.sensorData?.KD?.value ?? 0"
+                  [unit]="vm.sensorData?.KD?.unit"
+                  [failed]="vm.sensorData?.KD?.failed ?? true"
+                ></app-mechatronics-sensor-card>
+              </span>
+              <div class="mechatron-pid-actions">
+                <span class="mechatron-limit-label" [class.font-bold]="!vm.indicatorState?.[IndicatorType.KD]?.canIncrease" [class.text-red-400]="!vm.indicatorState?.[IndicatorType.KD]?.canIncrease">max</span>
+                <span class="mechatron-limit-label" [class.font-bold]="!vm.indicatorState?.[IndicatorType.KD]?.canDecrease" [class.text-blue-400]="!vm.indicatorState?.[IndicatorType.KD]?.canDecrease">min</span>
+                <button class="mechatron-step-button" [disabled]="!commands.canUpdate() || !vm.indicatorState?.[IndicatorType.KD]?.canIncrease" (click)="updateIndicator(IndicatorType.KD, MethodType.INCREASE)">+</button>
+                <button class="mechatron-step-button" [disabled]="!commands.canUpdate() || !vm.indicatorState?.[IndicatorType.KD]?.canDecrease" (click)="updateIndicator(IndicatorType.KD, MethodType.DECREASE)">-</button>
+              </div>
+            </div>
+          </div>
+          <div class="mechatron-panel mechatron-record-panel">
+            <div class="mechatron-record-wrapper">
+              <div class="mechatron-record-controls">
+                <button (click)="startRecording()" [disabled]="!commands.canStart()" class="mechatron-btn-start">
+                  <span class="mechatron-icon-start">▶</span>
+                  <span>Start</span>
+                </button>
+                <button (click)="stopRecording()" [disabled]="!commands.canStop()" class="mechatron-btn-stop">
+                  <span class="mechatron-icon-stop">■</span>
+                  <span>Stop</span>
+                </button>
+              </div>
+            </div>
+            <div class="mechatron-record-status">
+              @if (commands.recording()?.lastError) { <p role="alert">{{ commands.recording()?.lastError }}</p> }
+              @if (commands.recording()?.bagName) { <p>{{ commands.recording()?.bagName }}</p> }
+              <span class="mechatron-record-text" [class.text-red-500]="((isRecording$ | async) ?? false)" [class.text-gray-400]="!((isRecording$ | async) ?? false)">
+                {{ !commands.recording() ? "STATO NON DISPONIBILE" : commands.recording()?.recording ? "RECORDING" : "NOT RECORDING" }}
+              </span>
+              @if (((isRecording$ | async) ?? false)) {
+                <span class="mechatron-record-indicator"></span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="mechatron-column mechatron-middle-column border-r border-b border-gray-700">
+          <div class="mechatron-panel border-b border-gray-700 mechatron-row"
+            [class.sensor-active]="vm.activeSensor === ActiveSensor.WAND">
+            <span class="mechatron-label">Est. Height Wand</span>
+            <span class="mechatron-value-standard">
+              <app-mechatronics-sensor-card [value]="vm.sensorData?.CURRENT_HEIGHT_EST_WAND?.value ?? 0" [unit]="vm.sensorData?.CURRENT_HEIGHT_EST_WAND?.unit" [failed]="vm.sensorData?.CURRENT_HEIGHT_EST_WAND?.failed ?? true"></app-mechatronics-sensor-card>
+            </span>
+          </div>
+          
+          <div class="mechatron-panel border-b border-gray-700 mechatron-row">
+            <span class="mechatron-label">Height Target</span>
+            <app-mechatronics-sensor-card [value]="vm.sensorData?.HEIGHT_TARGET?.value ?? 0" [unit]="vm.sensorData?.HEIGHT_TARGET?.unit" [failed]="vm.sensorData?.HEIGHT_TARGET?.failed ?? true"></app-mechatronics-sensor-card>
+            <div class="mechatron-pid-actions">
+              <button class="mechatron-step-button" [disabled]="!commands.canUpdate()" (click)="updateIndicator(IndicatorType.HEIGHT_TARGET, MethodType.INCREASE)">+</button>
+              <button class="mechatron-step-button" [disabled]="!commands.canUpdate()" (click)="updateIndicator(IndicatorType.HEIGHT_TARGET, MethodType.DECREASE)">-</button>
+            </div>
+          </div>
+          
+          <div class="mechatron-panel mechatron-row">
+            <span class="mechatron-label">Flap Angle Out</span>
+            <span class="mechatron-value-standard">
+              <app-mechatronics-sensor-card [value]="vm.sensorData?.FLAP_ANGLE_OUT?.value ?? 0" [unit]="vm.sensorData?.FLAP_ANGLE_OUT?.unit" [failed]="vm.sensorData?.FLAP_ANGLE_OUT?.failed ?? true"></app-mechatronics-sensor-card>
+            </span>
+          </div>
+        </div>
+
+        <div class="mechatron-column mechatron-right-column border-r border-b border-gray-700">
+          <div class="mechatron-panel border-b border-gray-700 mechatron-row">
+            <span class="mechatron-label">Servo Angle Out</span>
+            <span class="mechatron-value-standard">
+              <app-mechatronics-sensor-card [value]="vm.sensorData?.SERVO_ANGLE_OUT?.value ?? 0" [unit]="vm.sensorData?.SERVO_ANGLE_OUT?.unit" [failed]="vm.sensorData?.SERVO_ANGLE_OUT?.failed ?? true"></app-mechatronics-sensor-card>
+            </span>
+          </div>
+          <div class="mechatron-panel border-b border-gray-700 mechatron-row">
+            <span class="mechatron-label">Roll</span>
+            <span class="mechatron-value-standard">
+              <app-mechatronics-sensor-card [value]="vm.sensorData?.ROLL?.value ?? 0" [unit]="vm.sensorData?.ROLL?.unit" [failed]="vm.sensorData?.ROLL?.failed ?? true"></app-mechatronics-sensor-card>
+            </span>
+          </div>
+          <div class="mechatron-panel border-b border-gray-700 mechatron-row">
+            <span class="mechatron-label">Pitch</span>
+            <span class="mechatron-value-standard">
+              <app-mechatronics-sensor-card [value]="vm.sensorData?.PITCH?.value ?? 0" [unit]="vm.sensorData?.PITCH?.unit" [failed]="vm.sensorData?.PITCH?.failed ?? true"></app-mechatronics-sensor-card>
+            </span>
+          </div>
+          <div class="mechatron-panel border-b border-gray-700 mechatron-row">
+            <span class="mechatron-label">Wand Angle</span>
+            <span class="mechatron-value-standard">
+              <app-mechatronics-sensor-card [value]="vm.sensorData?.WAND_ANGLE?.value ?? 0" [unit]="vm.sensorData?.WAND_ANGLE?.unit" [failed]="vm.sensorData?.WAND_ANGLE?.failed ?? true"></app-mechatronics-sensor-card>
+            </span>
+          </div>
+          
+          <div class="mechatron-panel border-b border-gray-700 mechatron-row"
+            [class.sensor-active]="vm.activeSensor === ActiveSensor.ULTRASOUND">
+            <span class="mechatron-label">Est. Height Ultra</span>
+            <span class="mechatron-value-standard">
+              <app-mechatronics-sensor-card [value]="vm.sensorData?.CURRENT_HEIGHT_EST_ULTRASOUND?.value ?? 0" [unit]="vm.sensorData?.CURRENT_HEIGHT_EST_ULTRASOUND?.unit" [failed]="vm.sensorData?.CURRENT_HEIGHT_EST_ULTRASOUND?.failed ?? true"></app-mechatronics-sensor-card>
+            </span>
+          </div>
+          
+          <div class="mechatron-panel mechatron-row">
+            <span class="mechatron-label">Ultrasound (Raw)</span>
+            <span class="mechatron-value-standard">
+              <app-mechatronics-sensor-card [value]="vm.sensorData?.ULTRASOUND_DATA?.value ?? 0" [unit]="vm.sensorData?.ULTRASOUND_DATA?.unit" [failed]="vm.sensorData?.ULTRASOUND_DATA?.failed ?? true"></app-mechatronics-sensor-card>
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  }
+}

@@ -1,0 +1,61 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.login-form {
+  @apply bg-[#1a1b24] rounded-xl shadow-2xl border border-gray-800 flex flex-col items-center;
+  
+  /* Dimensione fluida: cresce in base alla larghezza dello schermo (vw)
+     ma non diventa mai né troppo piccola (300px) né gigante (600px) */
+  width: clamp(300px, 40vw, 600px);
+  
+  /* Il padding interno si adatta all'altezza dello schermo (vh) */
+  padding: clamp(1.5rem, 5vh, 3rem);
+
+  /* Se lo schermo orizzontale è davvero bassissimo, abilita lo scroll interno alla card,
+     non su tutta la pagina. */
+  max-height: 95vh;
+  overflow-y: auto;
+}
+
+.login-logo {
+  /* Logo scalabile basato sull'altezza dello schermo */
+  height: clamp(3rem, 15vh, 6rem);
+  width: auto;
+  margin-bottom: clamp(0.5rem, 3vh, 1.5rem);
+}
+
+.login-title {
+  @apply font-bold text-white tracking-wide;
+  /* Testo e margini fluidi */
+  font-size: clamp(1.1rem, 3vh, 1.5rem);
+  margin-bottom: clamp(1rem, 4vh, 2rem);
+}
+
+.login-input-group {
+  @apply w-full;
+  margin-bottom: clamp(1rem, 4vh, 2rem);
+}
+
+.login-label {
+  @apply block text-gray-400 text-sm mb-2;
+}
+
+/* La tua input class, se non l'hai globale */
+.text-input {
+  @apply w-full bg-gray-900 border border-gray-700 text-white rounded-md px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors;
+}
+
+.login-error {
+  @apply text-red-400 text-xs mt-2;
+}
+
+.login-button {
+  @apply w-full bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-bold rounded-md transition-colors flex justify-center items-center gap-2;
+  
+  /* Bottone fluido in proporzione alla schermata */
+  padding-block: clamp(0.75rem, 2vh, 1.25rem);
+  font-size: clamp(0.9rem, 2vh, 1.1rem);
+}

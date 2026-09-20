@@ -1,0 +1,171 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.mechatron-page {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: clamp(0.25rem, 0.7vmin, 0.5rem) 0 clamp(0.75rem, 1.5vmin, 1rem);
+}
+
+.mechatron-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.mechatron-column {
+  display: grid;
+  min-height: 0;
+  min-width: 0;
+}
+
+.mechatron-left-column { grid-template-rows: 38fr 62fr; }
+.mechatron-middle-column { grid-template-rows: 38fr 27fr 35fr; }
+.mechatron-right-column { grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr; }
+
+.mechatron-panel {
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: clamp(0.65rem, 1.5vmin, 1.5rem);
+  transition: background-color 0.4s ease, border-color 0.4s ease; /* Rende la comparsa del focus fluida */
+}
+
+.mechatron-row {
+  @apply flex justify-between items-center;
+}
+
+/* --- ETICHETTE E TESTI GENERALI --- */
+.mechatron-label {
+  font-size: clamp(0.6rem, 4vmin, 4rem); 
+  line-height: 1.15;
+  transition: color 0.4s ease, text-shadow 0.4s ease; /* Transizione fluida per l'effetto neon */
+}
+
+.mechatron-limit-label {
+  font-size: clamp(0.4rem, 2.5vmin, 2rem);
+  line-height: 1;
+}
+
+.mechatron-value-standard {
+  @apply font-bold text-white;
+  transition: color 0.4s ease;
+}
+
+/* --- PANNELLO PID (KP, KI, KD) --- */
+.mechatron-pid-panel {
+  @apply flex flex-col justify-center;
+  gap: clamp(0.5rem, 2vmin, 2rem);
+}
+
+.mechatron-pid-value {
+  @apply font-bold text-white inline-block scale-75 origin-center;
+}
+
+.mechatron-pid-actions {
+  @apply flex items-center;
+  gap: clamp(0.3rem, 1.5vmin, 1rem);
+}
+
+.mechatron-step-button {
+  border-radius: 0.25rem;
+  background: #374151;
+  font-weight: 700;
+  line-height: 1;
+  @apply flex items-center justify-center;
+  width: clamp(1rem, 5vmin, 4rem);
+  height: clamp(1rem, 5vmin, 4rem);
+  font-size: clamp(0.8rem, 3.5vmin, 3rem);
+}
+
+/* --- PANNELLO START/STOP --- */
+.mechatron-record-panel {
+  @apply flex flex-col items-center justify-center;
+  gap: clamp(0.75rem, 3vmin, 3rem);
+}
+
+.mechatron-record-wrapper {
+  @apply flex items-center justify-center w-full;
+}
+
+.mechatron-record-controls {
+  @apply inline-flex rounded-full bg-gray-800/80 shadow;
+  padding: clamp(0.35rem, 1.5vmin, 1.5rem);
+  gap: clamp(0.5rem, 2vmin, 2rem);
+}
+
+.mechatron-btn-start, .mechatron-btn-stop {
+  @apply inline-flex items-center gap-2 rounded-full font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+  padding: clamp(0.3rem, 2.5vmin, 2.5rem) clamp(0.5rem, 4vmin, 3.5rem);
+  font-size: clamp(0.6rem, 3vmin, 2.5rem);
+}
+
+.mechatron-btn-start {
+  @apply text-green-400 hover:text-green-300 hover:bg-gray-700/70;
+}
+
+.mechatron-btn-stop {
+  @apply text-red-400 hover:text-red-300 hover:bg-gray-700/70;
+}
+
+.mechatron-icon-start, .mechatron-icon-stop {
+  @apply inline-flex items-center justify-center rounded-full;
+  width: clamp(1rem, 5vmin, 3rem);
+  height: clamp(1rem, 5vmin, 3rem);
+}
+
+.mechatron-icon-start { @apply bg-green-500/20; }
+.mechatron-icon-stop { @apply bg-red-500/20; }
+
+.mechatron-record-status {
+  @apply flex items-center justify-center gap-2 mt-1;
+}
+
+.mechatron-record-text {
+  @apply font-medium uppercase tracking-wide;
+  font-size: clamp(0.5rem, 2.5vmin, 2rem);
+}
+
+.mechatron-record-indicator {
+  @apply inline-flex rounded-full bg-red-500;
+  width: clamp(0.5rem, 2vmin, 1.5rem);
+  height: clamp(0.5rem, 2vmin, 1.5rem);
+}
+
+/* Tutti i bottoni/select disabilitati globali in questo componente */
+:host button:disabled, :host select:disabled {
+  @apply opacity-40 cursor-not-allowed grayscale pointer-events-none;
+}
+
+/* --- 🟢 COMPORTAMENTO PER IL SENSORE ATTIVO NEL CONTROLLO PID --- */
+.sensor-active {
+  background-color: rgba(34, 197, 94, 0.06) !important; /* Leggerissimo sfondo di focus verde trasparente */
+  border-bottom-color: rgba(34, 197, 94, 0.3) !important; /* Evidenzia leggermente la linea di divisione */
+
+  .mechatron-label {
+    @apply text-green-400 font-semibold;
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.3); /* Effetto glow/neon soft sul testo del sensore attivo */
+  }
+
+  .mechatron-value-standard {
+    @apply text-green-400;
+  }
+
+  /* Se la card interna "app-mechatronics-sensor-card" ha degli stili nativi che bloccano il testo in bianco, 
+     usiamo ::ng-deep per forzare il colore verde anche sui numeri interni della card attiva */
+  ::ng-deep app-mechatronics-sensor-card {
+    .text-white, span, div {
+      color: #4ade80 !important; /* Forza il colore verde anche sugli elementi interni alla card */
+      transition: color 0.4s ease;
+    }
+  }
+}
