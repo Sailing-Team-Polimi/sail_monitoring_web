@@ -252,19 +252,21 @@ test('only Staff subscribes to and receives diagnostics; switching to Guest clea
 
 test('diagnostics ignore retained/malformed messages, expire independently, and clear on outage', async t => {
   const {session, login} = setup(t);
+  // Each MQTT event can change the value; don't carry assertion narrowing across events.
+  const diagnostic = () => session.diagnostic$.value;
   const client = await login('Staff');
   client.message(TOPICS.diagnostic, diagnosticSample, true);
-  assert.equal(session.diagnostic$.value, null);
+  assert.equal(diagnostic(), null);
   client.message(TOPICS.diagnostic, diagnosticSample);
   t.mock.timers.tick(APP_CONFIG.dataTimeoutMs + 500);
-  assert.equal(session.diagnostic$.value?.raspberry?.temperature_c, 48);
+  assert.equal(diagnostic()?.raspberry?.temperature_c, 48);
   client.message(TOPICS.diagnostic, {...diagnosticSample, raspberry: {temperature_c: 'bad'}});
   t.mock.timers.tick(APP_CONFIG.diagnosticTimeoutMs - APP_CONFIG.dataTimeoutMs);
-  assert.equal(session.diagnostic$.value, null);
+  assert.equal(diagnostic(), null);
   client.message(TOPICS.diagnostic, diagnosticSample);
-  assert.ok(session.diagnostic$.value);
+  assert.ok(diagnostic());
   client.connected = false;
   client.emit('close');
-  assert.equal(session.diagnostic$.value, null);
+  assert.equal(diagnostic(), null);
   assert.equal(session.feedback$.value, '');
 });
