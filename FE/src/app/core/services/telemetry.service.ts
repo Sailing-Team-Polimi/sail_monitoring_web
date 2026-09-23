@@ -15,5 +15,6 @@ export class TelemetryService {
   readonly mechatronicsData$ = stream(this.mqtt.mechatronics$);
   readonly indicatorsState$ = stream(this.mqtt.indicators$);
   readonly recordingState$ = stream(this.mqtt.recording$);
+  readonly diagnosticData$ = stream(this.mqtt.diagnostic$);
   readonly mqttState$ = stream(this.mqtt.connection$);
 }

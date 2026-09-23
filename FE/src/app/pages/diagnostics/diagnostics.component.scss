@@ -1,0 +1,36 @@
+:host { display: block; }
+.diagnostics-page { max-width: 1440px; margin: 0 auto; padding: 1.5rem 0.5rem; color: #e2e8f0; }
+.page-heading, .card-heading, .battery-level { display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap; }
+h2 { font-size: 1.65rem; font-weight: 600; }
+.page-heading p { color: #94a3b8; margin-top: 0.35rem; }
+.sample-time { font-size: 0.85rem; }
+.empty-state { color: #cbd5e1; padding: 1rem; margin: 1rem 0; border: 1px dashed #475569; border-radius: 0.75rem; }
+.diagnostic-card { background: #1a1b24; border: 1px solid #334155; border-radius: 1rem; padding: 1.25rem; min-width: 0; }
+.raspberry-card { margin-top: 1.5rem; }
+.card-heading h3, .card-heading h4 { display: flex; align-items: center; gap: 0.6rem; font-weight: 600; overflow-wrap: anywhere; }
+.card-heading .material-icons { color: #94a3b8; }
+.status { font-size: 0.75rem; padding: 0.3rem 0.6rem; border: 1px solid currentColor; border-radius: 0.5rem; color: #94a3b8; }
+.status[data-status='ok'] { color: #4ade80; }
+.status[data-status='warning'] { color: #fbbf24; }
+.status[data-status='error'] { color: #f87171; }
+.metrics { display: grid; gap: 1.25rem; margin-top: 1.5rem; }
+.raspberry-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.battery-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+dt { color: #94a3b8; font-size: 0.8rem; }
+dd { font-size: 1.2rem; font-weight: 500; margin-top: 0.35rem; overflow-wrap: anywhere; }
+.section-title { font-size: 1.15rem; font-weight: 600; margin: 1.75rem 0 0.85rem; }
+.battery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.battery-level { margin-top: 1.5rem; color: #94a3b8; font-size: 0.85rem; }
+.battery-level strong { font-size: 1.5rem; color: #e2e8f0; }
+progress, .unknown-level { width: 100%; height: 0.5rem; display: block; margin-top: 0.6rem; border: 0; border-radius: 1rem; overflow: hidden; background: #334155; }
+progress { appearance: none; }
+progress::-webkit-progress-bar { background: #334155; }
+progress::-webkit-progress-value { background: #60a5fa; }
+progress::-moz-progress-bar { background: #60a5fa; }
+@media (max-width: 900px) {
+  .battery-grid { grid-template-columns: 1fr; }
+  .raspberry-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 420px) {
+  .battery-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

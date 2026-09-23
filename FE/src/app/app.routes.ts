@@ -8,9 +8,14 @@ import { SettingsComponent } from './pages/settings/settings.component'; // ✅ 
 import { authGuard } from './core/guards/auth.guard';
 import { LoginComponent } from './pages/login/login.component';
 import { AuthRoles } from './dtos/auth/auth-roles';
+import { DiagnosticsComponent } from './pages/diagnostics/diagnostics.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
+  {
+    path: 'diagnostics', component: DiagnosticsComponent, canActivate: [authGuard],
+    data: { allowedRoles: [AuthRoles.Admin] }
+  },
   {
     path: 'dashboard', component: DashboardComponent, canActivate: [authGuard],
     data: { allowedRoles: [AuthRoles.Admin, AuthRoles.Guest] }

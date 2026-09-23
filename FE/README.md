@@ -1,5 +1,9 @@
 # Polimi Sailing Team — Sail Monitoring Web
 
+La pagina Staff **Diagnostics** riceve `sail_gui/data/diagnostic`.
+Il [contratto provvisorio v1](docs/diagnostics.md) descrive Raspberry, batterie e valori mancanti.
+L'indicatore MQTT nella navbar è verde solo quando il broker è connesso, rosso negli altri stati.
+
 WebApp Angular autonoma per la telemetria e i comandi del team. Mantiene le schermate
 del progetto PoliMiSailGUI e comunica **direttamente con il broker MQTT attraverso WSS**.
 Non richiede un backend Node, un database o un server ROS nel cloud.

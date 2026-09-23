@@ -1,0 +1,55 @@
+<section class="diagnostics-page" aria-labelledby="diagnostics-title">
+  <div class="page-heading">
+    <div>
+      <h2 id="diagnostics-title">Diagnostics</h2>
+      <p>Stato del Raspberry e delle batterie di bordo</p>
+    </div>
+    @if (data()) {
+      <p class="sample-time">Campione: {{ sampleTime() | date:'dd/MM/yyyy HH:mm:ss' }}</p>
+    }
+  </div>
+
+  @if (!data()) {
+    <p class="empty-state" role="status">Nessun dato diagnostico aggiornato. In attesa della barca.</p>
+  }
+
+  <article class="diagnostic-card raspberry-card">
+    <div class="card-heading">
+      <h3><span class="material-icons" aria-hidden="true">memory</span> Raspberry</h3>
+      <span class="status" [attr.data-status]="raspberry()?.status ?? 'unknown'">{{ statusLabel(raspberry()?.status) }}</span>
+    </div>
+    <dl class="metrics raspberry-metrics">
+      <div><dt>Temperatura</dt><dd>{{ format(raspberry()?.temperature_c, '°C') }}</dd></div>
+      <div><dt>Utilizzo CPU</dt><dd>{{ format(raspberry()?.cpu_usage_percent, '%') }}</dd></div>
+      <div><dt>Memoria utilizzata</dt><dd>{{ format(raspberry()?.memory_usage_percent, '%') }}</dd></div>
+      <div><dt>Tempo di attività</dt><dd>{{ uptime(raspberry()?.uptime_s) }}</dd></div>
+    </dl>
+  </article>
+
+  <h3 class="section-title">Batterie</h3>
+  <div class="battery-grid">
+    @for (battery of batteries(); track battery.id) {
+      <article class="diagnostic-card">
+        <div class="card-heading">
+          <h4><span class="material-icons" aria-hidden="true">battery_std</span> {{ battery.name }}</h4>
+          <span class="status" [attr.data-status]="battery.status">{{ statusLabel(battery.status) }}</span>
+        </div>
+        <div class="battery-level">
+          <span>Carica</span><strong>{{ format(battery.level_percent, '%') }}</strong>
+        </div>
+        @if (battery.level_percent !== null) {
+          <progress [value]="battery.level_percent" max="100" [attr.aria-label]="'Carica ' + battery.name"></progress>
+        } @else {
+          <div class="unknown-level" aria-hidden="true"></div>
+        }
+        <dl class="metrics battery-metrics">
+          <div><dt>Tensione</dt><dd>{{ format(battery.voltage_v, 'V') }}</dd></div>
+          <div><dt>Corrente</dt><dd>{{ format(battery.current_a, 'A') }}</dd></div>
+          <div><dt>Temperatura</dt><dd>{{ format(battery.temperature_c, '°C') }}</dd></div>
+        </dl>
+      </article>
+    } @empty {
+      <p class="empty-state">Nessuna batteria presente nell’ultimo messaggio ricevuto.</p>
+    }
+  </div>
+</section>

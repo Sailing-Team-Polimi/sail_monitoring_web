@@ -1,17 +1,18 @@
 <header class="bg-[#1a1b24] py-2 px-4 rounded-md shadow flex items-center justify-between relative">
-    <div class="flex items-center gap-2">
-        <img src="assets/logos/polimisailing.png" class="w-[70px] h-[70px]" />
-        <h1 class="text-white text-base font-semibold bg-clip-text">
+    <div class="flex items-center gap-2 min-w-0">
+        <img src="assets/logos/polimisailing.png" alt="Polimi Sailing Team" class="w-12 h-12 sm:w-[70px] sm:h-[70px] shrink-0" />
+        <h1 class="text-white text-sm sm:text-base font-semibold bg-clip-text">
             POLIMI Sailing Team
         </h1>
     </div>
 
-    <div class="flex items-center gap-4 md:gap-6">
-        <nav class="hidden md:flex gap-6 items-center justify-center pr-4">
+    <div class="flex items-center gap-3 xl:gap-6">
+        <nav aria-label="Navigazione principale" class="hidden xl:flex gap-6 items-center justify-center pr-4">
             <a routerLink="/dashboard" class="nav-link" routerLinkActive="nav-link-active" [routerLinkActiveOptions]="{ exact: true }">
                 <span class="material-icons text-3xl">dashboard</span>
                 <span class="text-sm">Dashboard</span>
             </a>
+            <ng-container [ngTemplateOutlet]="mqttBadge" />
 
             @if(isAdmin()) {
                 <a routerLink="/map" class="nav-link px-4 py-2" routerLinkActive="nav-link-active" [routerLinkActiveOptions]="{ exact: true }">
@@ -28,6 +29,10 @@
                     <span class="material-icons text-3xl">settings</span>
                     <span class="text-sm">Settings</span>
                 </a>
+                <a routerLink="/diagnostics" class="nav-link" routerLinkActive="nav-link-active" [routerLinkActiveOptions]="{ exact: true }">
+                    <span class="material-icons text-3xl" aria-hidden="true">monitor_heart</span>
+                    <span class="text-sm">Diagnostics</span>
+                </a>
             }
 
             <a routerLink="/visualization" class="nav-link" routerLinkActive="nav-link-active" [routerLinkActiveOptions]="{ exact: true }">
@@ -38,16 +43,11 @@
             </a>
         </nav>
 
-        <button (click)="toggleMobileMenu()" class="md:hidden flex items-center hover:text-blue-400">
+        <div class="xl:hidden"><ng-container [ngTemplateOutlet]="mqttBadge" /></div>
+        <button type="button" aria-label="Apri o chiudi menu" [attr.aria-expanded]="showMobileMenu" (click)="toggleMobileMenu()" class="xl:hidden flex items-center hover:text-blue-400">
             <span class="material-icons text-3xl">menu</span>
         </button>
 
-        @if(mqttNotConnected()) {
-            <div class="flex items-center gap-2 text-yellow-400 text-sm font-semibold">
-                <span class="material-icons text-base">warning</span>
-                <span class="hidden sm:inline">MQTT not linked</span>
-            </div>
-        }
 
         <button type="button" class="nav-link" (click)="logout.emit()">
             <span class="material-icons text-3xl">logout</span>
@@ -56,7 +56,7 @@
     </div>
 
     @if(showMobileMenu) {
-        <div class="absolute top-[90px] right-4 w-64 md:hidden bg-[#1a1b24] border border-gray-700 rounded-md shadow-2xl flex flex-col gap-1 p-2 z-50">
+        <nav aria-label="Menu mobile" class="absolute top-full mt-2 right-4 w-64 xl:hidden bg-[#1a1b24] border border-gray-700 rounded-md shadow-2xl flex flex-col gap-1 p-2 z-50">
             <a routerLink="/dashboard" (click)="showMobileMenu = false" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-700 rounded text-white">
                 <span class="material-icons">dashboard</span> Dashboard
             </a>
@@ -71,6 +71,9 @@
                 <a routerLink="/settings" (click)="showMobileMenu = false" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-700 rounded text-white">
                     <span class="material-icons">settings</span> Settings
                 </a>
+                <a routerLink="/diagnostics" (click)="showMobileMenu = false" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-700 rounded text-white">
+                    <span class="material-icons" aria-hidden="true">monitor_heart</span> Diagnostics
+                </a>
             }
 
             <a routerLink="/visualization" (click)="showMobileMenu = false" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-700 rounded text-white">
@@ -79,6 +82,12 @@
                 </svg>
                 Visualization
             </a>
-        </div>
+        </nav>
     }
 </header>
+
+<ng-template #mqttBadge>
+    <span class="mqtt-badge" [class.mqtt-connected]="!mqttNotConnected()" role="status"
+        [attr.aria-label]="mqttNotConnected() ? 'MQTT: non connesso al broker' : 'MQTT: connesso al broker'"
+        [title]="mqttNotConnected() ? 'Broker non connesso' : 'Broker connesso; la disponibilità dei sensori è separata'">MQTT</span>
+</ng-template>

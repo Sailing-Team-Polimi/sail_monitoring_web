@@ -17,7 +17,6 @@ export class AppComponent {
   readonly isLoggedIn = this.auth.isLoggedIn;
   readonly authRole = this.auth.authRole;
   readonly feedback = toSignal(this.mqtt.feedback$, {requireSync: true});
-  readonly dashboard = toSignal(this.mqtt.dashboard$, {requireSync: true});
   constructor() {
     effect(() => {
       if (!this.isLoggedIn()) void this.router.navigate(['/login']);

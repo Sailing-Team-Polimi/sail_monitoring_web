@@ -2,13 +2,14 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NgTemplateOutlet } from '@angular/common';
 import { AuthRoles } from '../../dtos/auth/auth-roles';
 import { TelemetryService } from '../../core/services/telemetry.service';
 import { MqttConnectionState } from '../../dtos/mqtt/Mqtt.connection.model';
 
 @Component({
     selector: 'app-header',
-    imports: [RouterLink, RouterLinkActive],
+    imports: [RouterLink, RouterLinkActive, NgTemplateOutlet],
     templateUrl: './header.component.html',
     styleUrls: ['./header.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,

@@ -9,6 +9,7 @@ import { AuthRoles } from '../src/app/dtos/auth/auth-roles';
 import { ClientCommandFactory as commands } from '../src/app/dtos/commands/ClientCommandFactory';
 import { IndicatorType } from '../src/app/dtos/indicator/IndicatorType';
 import { MethodType } from '../src/app/dtos/indicator/MethodType';
+import { MqttConnectionState } from '../src/app/dtos/mqtt/Mqtt.connection.model';
 
 class FakeClient extends EventEmitter {
   connected = false;
@@ -63,6 +64,8 @@ test('login waits for broker authentication and SUBACK; no publish probes', asyn
   clients[0].acknowledgeSubscription!();
   await login;
   assert.equal(session.role$.value, AuthRoles.Admin);
+  assert.equal(session.connection$.value.status, MqttConnectionState.CONNECTED);
+  assert.equal(session.feedback$.value, '');
   assert.deepEqual(clients[0].published, []);
 });
 test('invalid broker URL and unknown users never open a socket', async t => {
@@ -169,12 +172,16 @@ test('outage discards commands, clears old data and reconnects using a fresh cli
   assert.equal(session.pending$.value, false);
   assert.equal(session.recording$.value, null);
   assert.equal(old.options.password, undefined);
+  assert.equal(session.connection$.value.status, MqttConnectionState.RECONNECTING);
+  assert.match(session.feedback$.value, /esito sconosciuto/);
   t.mock.timers.tick(APP_CONFIG.reconnectMs);
   const fresh = clients[1];
   assert.notEqual(fresh.options.clientId, old.options.clientId);
   assert.equal(fresh.options.reconnectPeriod, 0);
   assert.equal(fresh.options.queueQoSZero, false);
   fresh.accept(); fresh.acknowledgeSubscription!();
+  assert.equal(session.connection$.value.status, MqttConnectionState.CONNECTED);
+  assert.match(session.feedback$.value, /esito sconosciuto/);
   assert.equal(fresh.published.length, 0);
   old.message(TOPICS.recording, {recording: true});
   assert.equal(session.recording$.value, null);
@@ -224,4 +231,40 @@ test('indicator commands obey fresh boat capability flags and use unqueued QoS 0
   t.mock.timers.tick(APP_CONFIG.dataTimeoutMs + 1);
   session.send(commands.update(IndicatorType.KP, MethodType.DECREASE));
   assert.equal(client.published.length, 1);
+});
+
+const diagnosticSample = {schema_version: 1, stamp: {sec: 100, nanosec: 0},
+  raspberry: {temperature_c: 48}, batteries: [{id: 'main', level_percent: 0}, {id: 'aux', level_percent: 85}]};
+
+test('only Staff subscribes to and receives diagnostics; switching to Guest clears them', async t => {
+  const {session, login} = setup(t);
+  const staff = await login('Staff');
+  assert.ok(staff.subscriptions.includes(TOPICS.diagnostic));
+  staff.message(TOPICS.diagnostic, diagnosticSample);
+  assert.equal(session.diagnostic$.value?.batteries[0].level_percent, 0);
+  session.logout();
+  assert.equal(session.diagnostic$.value, null);
+  const guest = await login('Guest');
+  assert.equal(guest.subscriptions.includes(TOPICS.diagnostic), false);
+  guest.message(TOPICS.diagnostic, diagnosticSample);
+  assert.equal(session.diagnostic$.value, null);
+});
+
+test('diagnostics ignore retained/malformed messages, expire independently, and clear on outage', async t => {
+  const {session, login} = setup(t);
+  const client = await login('Staff');
+  client.message(TOPICS.diagnostic, diagnosticSample, true);
+  assert.equal(session.diagnostic$.value, null);
+  client.message(TOPICS.diagnostic, diagnosticSample);
+  t.mock.timers.tick(APP_CONFIG.dataTimeoutMs + 500);
+  assert.equal(session.diagnostic$.value?.raspberry?.temperature_c, 48);
+  client.message(TOPICS.diagnostic, {...diagnosticSample, raspberry: {temperature_c: 'bad'}});
+  t.mock.timers.tick(APP_CONFIG.diagnosticTimeoutMs - APP_CONFIG.dataTimeoutMs);
+  assert.equal(session.diagnostic$.value, null);
+  client.message(TOPICS.diagnostic, diagnosticSample);
+  assert.ok(session.diagnostic$.value);
+  client.connected = false;
+  client.emit('close');
+  assert.equal(session.diagnostic$.value, null);
+  assert.equal(session.feedback$.value, '');
 });
