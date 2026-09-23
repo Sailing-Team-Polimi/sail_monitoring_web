@@ -8,11 +8,11 @@
 
     <div class="flex items-center gap-3 xl:gap-6">
         <nav aria-label="Navigazione principale" class="hidden xl:flex gap-6 items-center justify-center pr-4">
+            <ng-container [ngTemplateOutlet]="mqttBadge" />
             <a routerLink="/dashboard" class="nav-link" routerLinkActive="nav-link-active" [routerLinkActiveOptions]="{ exact: true }">
                 <span class="material-icons text-3xl">dashboard</span>
                 <span class="text-sm">Dashboard</span>
             </a>
-            <ng-container [ngTemplateOutlet]="mqttBadge" />
 
             @if(isAdmin()) {
                 <a routerLink="/map" class="nav-link px-4 py-2" routerLinkActive="nav-link-active" [routerLinkActiveOptions]="{ exact: true }">
