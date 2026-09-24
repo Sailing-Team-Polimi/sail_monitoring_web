@@ -32,7 +32,7 @@ function numeric(value: unknown, keys: string[]): JsonObject {
 function coordinates(lat: unknown, lon: unknown): void {
   if (Math.abs(finite(lat)) > 90 || Math.abs(finite(lon)) > 180) throw new Error('Coordinate non valide');
 }
-/* --- ORIGINALE (DA SCOMMENTARE QUANDO GLI ELETTRONICI FIXANO IL BUG) ---
+
 export function dashboardPayload(value: unknown): DashboardData {
   return numeric(value, ['roll','pitch','yaw','sog','vmg','twa','twd','tws']) as unknown as DashboardData;
 }
@@ -41,24 +41,7 @@ export function mechatronicsPayload(value: unknown): MechatronicsData {
     'current_height_est_ultrasound','ultrasound_data','height_target','flap_angle_out','servo_angle_out',
     'roll','pitch','wand_angle']) as unknown as MechatronicsData;
 }
----------------------------------------------------------------------- */
 
-// --- TOPPA TEMPORANEA (DA ELIMINARE) ---
-export function dashboardPayload(value: unknown): DashboardData {
-  const data = numeric(value, ['roll','pitch','yaw','sog','vmg','twa','twd','tws']) as unknown as DashboardData;
-  // Sottraiamo 90 gradi al roll perché l'IMU invia dati già elaborati e storti di +90
-  data.roll = data.roll - 90;
-  return data;
-}
-export function mechatronicsPayload(value: unknown): MechatronicsData {
-  const data = numeric(value, ['servo_limit_max','servo_limit_min','kp','ki','kd','current_height_est_wand',
-    'current_height_est_ultrasound','ultrasound_data','height_target','flap_angle_out','servo_angle_out',
-    'roll','pitch','wand_angle']) as unknown as MechatronicsData;
-  // Sottraiamo 90 gradi al roll perché l'IMU invia dati già elaborati e storti di +90
-  data.roll = data.roll - 90;
-  return data;
-}
-// ---------------------------------------
 export function mapPayload(value: unknown): MapData {
   const data = numeric(value, ['lat','lon','yaw','twd','tws','ttl','dtl']);
   coordinates(data['lat'], data['lon']);
