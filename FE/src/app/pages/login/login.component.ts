@@ -9,7 +9,7 @@ import { APP_CONFIG } from '../../core/mqtt/app-config';
 })
 export class LoginComponent {
   username = 'Guest';
-  password = 'Guest1234';
+  password = 'guest2026';
   errorMsg = '';
   isLoading = false;
   readonly configured = Boolean(APP_CONFIG.brokerUrl);
