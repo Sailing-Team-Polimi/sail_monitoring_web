@@ -29,7 +29,7 @@ GitHub Pages ── file HTML/CSS/JS ──> browser Angular
 - Nuovo collegamento MQTT, conversioni dei messaggi e comandi nel frontend.
 - Workflow di verifica e pubblicazione automatica presente in `../.github/workflows/pages.yml`.
 - Broker **non ancora configurato**: la pagina iniziale mostra un messaggio e non tenta connessioni.
-- Nessuna credenziale reale inclusa. Nessun push o deploy remoto eseguito durante la migrazione.
+- Login ospite volutamente precompilato con `Guest` / `guest2026`; le credenziali Staff e Raspberry non sono incluse.
 - Test del protocollo eseguiti con un client simulato; integrazione con broker/ROS da verificare.
 - Ambiente Docker predisposto per sviluppo; avvio e compilazione Angular
   da verificare sul PC. Docker non è stato avviato durante la preparazione, come richiesto.
@@ -54,12 +54,17 @@ L'esempio non è un endpoint pronto all'uso. La porta MQTT/TLS 8883 non è la po
 L'app richiede un broker che supporti MQTT 5 via WSS, come HiveMQ Cloud.
 
 Creare nella console del broker le credenziali MQTT corrispondenti a ciascuno username.
-Le password si consegnano agli utenti separatamente e si inseriscono nella schermata di login.
+Il login è precompilato con **`Guest` / `guest2026`**, per consentire l'accesso ospite
+senza riscrivere i campi. Il broker verifica comunque queste credenziali quando si preme
+il pulsante di accesso. I campi restano modificabili per accedere come Staff.
+Le password Staff si consegnano agli utenti separatamente e si inseriscono nel login.
 Non sono le credenziali dell'account amministrativo HiveMQ.
 
-**Non inserire password in questo file, in HTML, nei workflow o nelle variabili di build.**
+**Non inserire password Staff o Raspberry nel frontend, nei workflow o nelle variabili di build.**
 Tutto ciò che viene compilato nel frontend può essere letto dai visitatori, anche se proveniva
-da un GitHub Secret. La configurazione contiene esclusivamente endpoint, username e profili UI.
+da un GitHub Secret. La password Guest precompilata è quindi pubblica per scelta:
+al broker questo utente deve avere soltanto i permessi di lettura previsti.
+`app-config.ts` contiene esclusivamente endpoint, username e profili UI.
 
 ### Profili della WebApp
 
@@ -110,7 +115,8 @@ Fonti: [accessi HiveMQ](https://docs.hivemq.com/hivemq-cloud/authn-authz.html),
 
 ### Sessioni e disconnessioni
 
-- Credenziali soltanto in memoria, necessarie per la riconnessione della pagina aperta.
+- Credenziali della sessione soltanto in memoria, necessarie per la riconnessione della pagina aperta.
+  Il valore Guest precompilato è incluso nel codice e ricompare quando si riapre il login.
 - Nessuna password o token in cookie, localStorage o sessionStorage.
 - Logout, chiusura e ricaricamento richiedono un nuovo login. Il password manager del browser
   può comunque compilare i campi, secondo le sue impostazioni.

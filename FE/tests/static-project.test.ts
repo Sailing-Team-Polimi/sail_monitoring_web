@@ -26,7 +26,9 @@ test('relative TypeScript imports and Angular templates resolve on case-sensitiv
 test('the standalone app contains no old login API, JWT or backend WebSocket connections', () => {
   for (const file of files(join(root, 'src')).filter(file => /\.(ts|html)$/.test(file))) {
     const source = readFileSync(file, 'utf8');
-    assert.doesNotMatch(source, /pst_auth_token|\/api\/login|new WebSocket\(|localStorage\.|sessionStorage\.|guest2026/, relative(root,file));
+    // Il login Guest è volutamente precompilato; resta vietato il vecchio
+    // trasporto backend e il salvataggio della sessione nello storage del browser.
+    assert.doesNotMatch(source, /pst_auth_token|\/api\/login|new WebSocket\(|localStorage\.|sessionStorage\./, relative(root,file));
   }
 });
 test('local image assets and the favicon are present in the Angular build inputs', () => {
