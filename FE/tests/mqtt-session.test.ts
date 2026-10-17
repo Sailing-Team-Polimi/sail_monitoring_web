@@ -196,6 +196,41 @@ test('unauthorized DISCONNECT ends only this session and does not loop reconnect
   t.mock.timers.tick(APP_CONFIG.reconnectMs * 3);
   assert.equal(clients.length, 1);
 });
+
+test('reconnection survives repeated network failures and timeouts until subscriptions succeed', async t => {
+  const {session, clients, login} = setup(t);
+  const first = await login();
+  first.connected = false;
+  first.emit('close');
+  t.mock.timers.tick(APP_CONFIG.reconnectMs);
+  clients[1].emit('error', new Error('network unavailable'));
+  assert.equal(session.connection$.value.status, MqttConnectionState.RECONNECTING);
+  assert.equal(session.role$.value, AuthRoles.Admin);
+  t.mock.timers.tick(APP_CONFIG.reconnectMs);
+  t.mock.timers.tick(APP_CONFIG.connectTimeoutMs);
+  assert.equal(clients[2].ended, true);
+  t.mock.timers.tick(APP_CONFIG.reconnectMs);
+  const recovered = clients[3];
+  assert.equal(recovered.options.username, 'operator');
+  assert.equal(recovered.options.password, 'test-password');
+  recovered.accept();
+  assert.equal(session.connection$.value.status, MqttConnectionState.RECONNECTING);
+  recovered.acknowledgeSubscription!();
+  assert.equal(session.connection$.value.status, MqttConnectionState.CONNECTED);
+  assert.deepEqual(recovered.published, []);
+});
+
+test('logout during reconnection cancels subsequent attempts', async t => {
+  const {session, clients, login} = setup(t);
+  const first = await login();
+  first.connected = false;
+  first.emit('close');
+  session.logout();
+  t.mock.timers.tick(APP_CONFIG.reconnectMs + APP_CONFIG.connectTimeoutMs);
+  assert.equal(clients.length, 1);
+  assert.equal(session.connection$.value.status, MqttConnectionState.DISCONNECTED);
+  assert.equal(session.role$.value, null);
+});
 test('stale, oversized or malformed payloads never enable commands', async t => {
   const {session, login} = setup(t);
   const client = await login();

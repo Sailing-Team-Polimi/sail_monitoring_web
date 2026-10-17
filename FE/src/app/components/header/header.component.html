@@ -87,7 +87,10 @@
 </header>
 
 <ng-template #mqttBadge>
-    <span class="mqtt-badge" [class.mqtt-connected]="!mqttNotConnected()" role="status"
-        [attr.aria-label]="mqttNotConnected() ? 'MQTT: non connesso al broker' : 'MQTT: connesso al broker'"
-        [title]="mqttNotConnected() ? 'Broker non connesso' : 'Broker connesso; la disponibilità dei sensori è separata'">MQTT</span>
+    <span class="mqtt-badge" [class.mqtt-connected]="mqttStatus() === 'connected'"
+        [class.mqtt-connecting]="mqttStatus() === 'connecting'" role="status" aria-atomic="true"
+        [attr.aria-label]="'MQTT: ' + mqttDescription()" [title]="mqttDescription()">
+        <span>MQTT</span>
+        <span class="mqtt-status">{{ mqttStatus() }}</span>
+    </span>
 </ng-template>

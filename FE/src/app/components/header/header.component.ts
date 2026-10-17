@@ -25,10 +25,19 @@ export class HeaderComponent {
     showMobileMenu = false;
 
     // #region Computed Signals
-    mqttNotConnected = computed(() => {
-        const { status } = this.mqttStateSignal() || {};
-        return status !== MqttConnectionState.CONNECTED;
-    })
+    mqttStatus = computed(() => {
+        const status = this.mqttStateSignal()?.status;
+        if (status === MqttConnectionState.CONNECTED) return 'connected';
+        if (status === MqttConnectionState.CONNECTING || status === MqttConnectionState.RECONNECTING) return 'connecting';
+        return 'disconnected';
+    });
+    mqttDescription = computed(() => {
+        switch (this.mqttStatus()) {
+            case 'connected': return 'Connesso al broker; la disponibilità dei sensori è separata';
+            case 'connecting': return 'Connessione al broker in corso';
+            default: return 'Disconnesso dal broker';
+        }
+    });
     isAdmin = computed(() => this.authRole() === AuthRoles.Admin);
     // #endregion
 

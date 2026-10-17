@@ -8,6 +8,8 @@
 
 .mqtt-badge {
     display: inline-flex;
+    flex-direction: column;
+    gap: 0.1rem;
     align-items: center;
     justify-content: center;
     border: 1px solid currentColor;
@@ -22,3 +24,10 @@
 }
 
 .mqtt-connected { color: #4ade80; }
+.mqtt-connecting { color: #facc15; }
+
+.mqtt-status {
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: normal;
+}

@@ -2,7 +2,10 @@
 
 La pagina Staff **Diagnostics** riceve `sail_gui/data/diagnostic`.
 Il [contratto provvisorio v1](docs/diagnostics.md) descrive Raspberry, batterie e valori mancanti.
-L'indicatore MQTT nella navbar è verde solo quando il broker è connesso, rosso negli altri stati.
+L'indicatore nella navbar mostra **MQTT** con lo stato scritto più piccolo sotto:
+**connected** in verde, **connecting** in giallo durante la connessione o riconnessione,
+**disconnected** in rosso quando la sessione è disconnessa o in errore.
+Indica il collegamento fra browser e broker, non conferma che ROS o i sensori siano disponibili.
 
 WebApp Angular autonoma per la telemetria e i comandi del team. Mantiene le schermate
 del progetto PoliMiSailGUI e comunica **direttamente con il broker MQTT attraverso WSS**.
@@ -114,6 +117,10 @@ Fonti: [accessi HiveMQ](https://docs.hivemq.com/hivemq-cloud/authn-authz.html),
 - Ogni connessione ha un identificativo casuale: più browser non si espellono a vicenda.
 - Un rifiuto di autorizzazione MQTT 5 termina la sessione e richiede un nuovo accesso.
 - Un guasto di rete crea una connessione nuova, senza ripristinare code di vecchi comandi.
+  Dopo un accesso riuscito, la pagina aperta ritenta automaticamente dopo 5 secondi da
+  ogni interruzione o tentativo fallito, restando in **connecting**. Ogni tentativo ha un
+  timeout di 12 secondi. Il verde ritorna dopo la connessione e la conferma delle sottoscrizioni.
+  Il logout annulla i tentativi; credenziali o permessi rifiutati richiedono un nuovo accesso.
 
 ## 2. Avvio locale e verifiche
 
