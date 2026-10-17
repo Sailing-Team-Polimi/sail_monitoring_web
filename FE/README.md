@@ -7,6 +7,10 @@ L'indicatore nella navbar mostra **MQTT** con lo stato scritto più piccolo sott
 **disconnected** in rosso quando la sessione è disconnessa o in errore.
 Indica il collegamento fra browser e broker, non conferma che ROS o i sensori siano disponibili.
 
+La SOG ricevuta da ROS è in metri al secondo: l'adattatore MQTT la converte in nodi
+prima di passarla alla dashboard (`m/s × 3600 / 1852`). VMG e TWS sono già in nodi
+nel messaggio ROS e non vengono convertite di nuovo.
+
 WebApp Angular autonoma per la telemetria e i comandi del team. Mantiene le schermate
 del progetto PoliMiSailGUI e comunica **direttamente con il broker MQTT attraverso WSS**.
 Non richiede un backend Node, un database o un server ROS nel cloud.

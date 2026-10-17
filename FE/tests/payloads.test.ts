@@ -53,9 +53,18 @@ test('indicator and servo commands retain the ROS gateway wire contract', () => 
 });
 test('telemetry rejects nonnumeric samples rather than presenting fabricated zero values', () => {
   const dashboard = {stamp, roll: 1, pitch: 2, yaw: 3, sog: 4, vmg: 5, twa: 6, twd: 7, tws: 8};
-  assert.deepEqual(dashboardPayload(dashboard), dashboard);
   assert.throws(() => dashboardPayload({...dashboard, sog: null}));
   assert.throws(() => dashboardPayload({...dashboard, yaw: Infinity}));
   assert.throws(() => dashboardPayload({...dashboard, stamp: undefined}));
   assert.throws(() => mechatronicsPayload({stamp, kp: 1}));
+});
+
+test('dashboard converts ROS SOG to knots once without changing wind speeds or the input', () => {
+  const raw = {stamp, roll: 1, pitch: 2, yaw: 3, sog: 1.852, vmg: -2, twa: 6, twd: 7, tws: 8};
+  const converted = dashboardPayload(raw);
+  assert.ok(Math.abs(converted.sog - 3.6) < 1e-12);
+  assert.deepEqual({...converted, sog: raw.sog}, raw);
+  assert.equal(raw.sog, 1.852);
+  assert.equal(dashboardPayload({...raw, sog: 0}).sog, 0);
+  assert.equal(dashboardPayload(raw).sog, converted.sog);
 });

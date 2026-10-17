@@ -6,7 +6,7 @@ export interface DashboardData {
     roll: number;
     pitch: number;
     yaw: number;
-    sog: number;
+    sog: number; // Nodi, convertiti dai m/s del messaggio ROS nell'adattatore MQTT.
     vmg: number;
     twa: number;
     twd: number;
