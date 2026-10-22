@@ -29,6 +29,22 @@
 
   <div class="control-panel">
 
+    <div role="status" aria-live="polite" class="p-2 text-sm">
+      @if (gpsState === 1) {
+        <p>GPS aggiornato</p>
+      } @else if (gpsState === 2) {
+        <p>Posizione prevista: nessuna nuova misura GPS</p>
+      } @else {
+        <p>Posizione non disponibile o troppo incerta</p>
+      }
+      @if (gpsSigma !== null) {
+        <p>Incertezza stimata: {{ gpsSigma | number:'1.0-1' }} m (1 sigma)</p>
+      }
+      @if (gpsFallback) {
+        <p>Precisione del ricevitore non disponibile: valore di ripiego.</p>
+      }
+    </div>
+
     <button (click)="resetTrack()"
             [disabled]="!commands.canSetMark()"
             class="btn-danger">
@@ -62,5 +78,5 @@
   </div>
 </div>
 @if (!commands.canSetMark()) {
-  <p class="text-amber-300 p-2 text-sm" role="status">Posizione non aggiornata: la mappa può mostrare l’ultima posizione ricevuta. Comandi disabilitati.</p>
+  <p class="text-amber-300 p-2 text-sm" role="status">Per modificare le boe servono accesso operatore, connessione e posizione GPS valida e aggiornata. Il simbolo attenuato indica una previsione o l'ultima posizione disponibile.</p>
 }

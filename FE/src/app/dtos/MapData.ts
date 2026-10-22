@@ -13,6 +13,10 @@ export interface MapData {
     tws: number;
     ttl: number;
     dtl: number;
+    gps_state: 0 | 1 | 2;
+    position_valid: boolean;
+    horizontal_stddev_m: number;
+    gps_covariance_fallback: boolean;
 
     //boe - opzionali
     marks: Mark[];

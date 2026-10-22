@@ -1,0 +1,8 @@
+# Keep editor saves consistent with .gitattributes.
+root = true
+
+[*]
+end_of_line = lf
+
+[*.{bat,cmd}]
+end_of_line = crlf

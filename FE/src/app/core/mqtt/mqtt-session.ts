@@ -213,7 +213,8 @@ export class MqttSession {
     switch (command.type) {
       case ClientCommandType.StartRecording: return !this.pending && this.fresh(TOPICS.recording) && this.recording$.value?.recording === false;
       case ClientCommandType.StopRecording: return !this.pending && this.fresh(TOPICS.recording) && this.recording$.value?.recording === true;
-      case ClientCommandType.SetMark: return this.fresh(TOPICS.map);
+      case ClientCommandType.SetMark: return this.fresh(TOPICS.map) &&
+        this.map$.value?.position_valid === true && this.map$.value?.gps_state === 1;
       case ClientCommandType.Update: {
         const indicator = this.indicators$.value?.[command.payload.indicator];
         if (!this.fresh(TOPICS.indicators) || !indicator || indicator.failed) return false;

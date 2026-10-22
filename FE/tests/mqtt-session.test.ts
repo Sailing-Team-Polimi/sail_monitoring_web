@@ -10,6 +10,7 @@ import { ClientCommandFactory as commands } from '../src/app/dtos/commands/Clien
 import { IndicatorType } from '../src/app/dtos/indicator/IndicatorType';
 import { MethodType } from '../src/app/dtos/indicator/MethodType';
 import { MqttConnectionState } from '../src/app/dtos/mqtt/Mqtt.connection.model';
+import { MarkType } from '../src/app/dtos/mark/MarkType';
 import { diagnosticSample } from './diagnostic-sample';
 
 class FakeClient extends EventEmitter {
@@ -307,4 +308,28 @@ test('diagnostics ignore retained/malformed messages, expire independently, and 
   client.emit('close');
   assert.equal(diagnostic(), null);
   assert.equal(session.feedback$.value, '');
+});
+
+
+
+
+test('live MQTT does not allow buoy commands for predicted or unavailable GPS', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  const command = commands.setMark({type: MarkType.PIN, lat: 45, lon: 10});
+  const raw = {stamp: {sec: 100, nanosec: 0}, lat: 45, lon: 10, yaw: 0, twd: 0, tws: 0,
+    dtl: 10, ttl: 5, marks: [], gps_state: 1, position_valid: true, horizontal_stddev_m: 1};
+  client.message(TOPICS.map, raw);
+  assert.equal(session.canCommand(command), true);
+  for (const gps_state of [2, 0]) {
+    client.message(TOPICS.map, {...raw, gps_state});
+    session.send(command);
+    assert.equal(session.canCommand(command), false);
+  }
+  assert.equal(client.published.length, 0);
+  client.message(TOPICS.map, raw);
+  session.send(command);
+  assert.equal(client.published.length, 1);
+  t.mock.timers.tick(APP_CONFIG.dataTimeoutMs + 1);
+  assert.equal(session.canCommand(command), false);
 });

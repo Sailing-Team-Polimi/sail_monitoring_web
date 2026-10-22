@@ -68,3 +68,28 @@ test('dashboard converts ROS SOG to knots once without changing wind speeds or t
   assert.equal(dashboardPayload({...raw, sog: 0}).sog, 0);
   assert.equal(dashboardPayload(raw).sog, converted.sog);
 });
+
+
+
+
+test('GPS quality distinguishes predictions, missing metadata and invalid estimates', () => {
+  const raw = {stamp, lat: 45, lon: 10, yaw: 0, twd: 0, tws: 0, dtl: 10, ttl: 5, marks: [],
+    gps_state: 1, position_valid: true, horizontal_stddev_m: 2, gps_covariance_fallback: false};
+  assert.equal(mapPayload(raw).ttl, 5);
+  const predicted = mapPayload({...raw, gps_state: 2});
+  assert.equal(predicted.position_valid, true);
+  assert.equal(predicted.gps_state, 2);
+  assert.equal(predicted.ttl, -1);
+  assert.equal(predicted.dtl, -1);
+  for (const invalid of [
+    {...raw, position_valid: false}, {...raw, gps_state: 99},
+    {...raw, horizontal_stddev_m: NaN}, {...raw, horizontal_stddev_m: -1},
+    {...raw, gps_state: undefined},
+  ]) {
+    const result = mapPayload(invalid);
+    assert.equal(result.gps_state, 0);
+    assert.equal(result.position_valid, false);
+    assert.equal(result.ttl, -1);
+  }
+  assert.equal(mapPayload({...raw, gps_covariance_fallback: true}).gps_covariance_fallback, true);
+});

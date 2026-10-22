@@ -57,7 +57,18 @@ export function mapPayload(value: unknown): MapData {
       marks.push({type: markTypes[code], lat: finite(mark['lat']), lon: finite(mark['lon'])});
     } catch { /* One invalid buoy must not discard the boat position. */ }
   }
-  return {...data, marks} as unknown as MapData;
+  // Old/malformed quality metadata is unavailable, never an implicit valid fix.
+  const sigma = data['horizontal_stddev_m'];
+  const qualityKnown = typeof sigma === 'number' && Number.isFinite(sigma) && sigma >= 0;
+  const usable = data['position_valid'] === true && qualityKnown &&
+    (data['gps_state'] === 1 || data['gps_state'] === 2);
+  const gps_state = usable ? data['gps_state'] : 0;
+  return {...data, marks, gps_state, position_valid: usable,
+    horizontal_stddev_m: qualityKnown ? sigma : -1,
+    gps_covariance_fallback: data['gps_covariance_fallback'] === true,
+    dtl: gps_state === 1 ? data['dtl'] : -1,
+    ttl: gps_state === 1 ? data['ttl'] : -1,
+  } as unknown as MapData;
 }
 export function indicatorsPayload(value: unknown): IndicatorsState {
   const data = object(value);
