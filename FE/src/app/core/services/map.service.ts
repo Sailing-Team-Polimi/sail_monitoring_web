@@ -55,6 +55,17 @@ export class MapService {
     return this.dataWsService.mapData$;
   }
 
+
+  setBoatPredicted(predicted: boolean): void {
+    this.boatMarker?.setOpacity(predicted ? 0.6 : 1);
+  }
+
+
+  setBoatPositionUnavailable(): void {
+    this.boatMarker?.setOpacity(0.25);
+    this.clearTrajectory();
+  }
+
   public sendSetMark(mark: Mark): void {
     const cmd: ClientCommandUnion = ClientCommandFactory.setMark(mark);
     this.commandWsService.sendCommand(cmd);

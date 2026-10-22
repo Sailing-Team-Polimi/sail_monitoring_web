@@ -38,6 +38,9 @@ export class MapComponent implements OnInit, OnDestroy {
   // Variabili esportate all'HTML
   public dtl: number | null = null;
   public ttl: number | null = null;
+  public gpsState: 0 | 1 | 2 = 0;
+  public gpsSigma: number | null = null;
+  public gpsFallback = false;
 
   private pinCoordinates: Mark | null = null;
   private comitatoCoordinates: Mark | null = null;
@@ -62,16 +65,28 @@ export class MapComponent implements OnInit, OnDestroy {
 
   private setupMapDataSubscription(): void {
     this.mapService.getMapDataStream().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data: MapData | null) => {
-      if (!data) { this.currentLat = null; this.currentLon = null; this.dtl = null; this.ttl = null; this.mapService.clearTrajectory(); return; }
-      this.currentLat = data.lat;
-      this.currentLon = data.lon;
+      if (!data) {
+        this.currentLat = null; this.currentLon = null; this.dtl = null; this.ttl = null;
+        this.gpsState = 0; this.gpsSigma = null; this.gpsFallback = false;
+        this.mapService.setBoatPositionUnavailable(); return;
+      }
+      this.gpsState = data.gps_state;
+      this.gpsSigma = data.horizontal_stddev_m >= 0 ? data.horizontal_stddev_m : null;
+      this.gpsFallback = data.gps_covariance_fallback;
+      this.currentLat = data.position_valid ? data.lat : null;
+      this.currentLon = data.position_valid ? data.lon : null;
       this.twd = data.twd;
       this.tws = data.tws;
       
       this.dtl = data.dtl;
       this.ttl = data.ttl;
 
-      this.mapService.updateBoatPosition(data.lat, data.lon, data.yaw);
+      if (data.position_valid) {
+        this.mapService.updateBoatPosition(data.lat, data.lon, data.yaw);
+        this.mapService.setBoatPredicted(data.gps_state === 2);
+      } else {
+        this.mapService.setBoatPositionUnavailable();
+      }
 
       const marks = data.marks ?? [];
       const buoyTypes: { type: MarkType; setter: (m: Mark) => void }[] = [
@@ -91,7 +106,7 @@ export class MapComponent implements OnInit, OnDestroy {
       // --- DISEGNO TRAIETTORIA ---
       if (this.ttl !== -1 && this.ttl !== null && 
           this.comitatoCoordinates && this.pinCoordinates && 
-          this.currentLat && this.currentLon) {
+          this.currentLat !== null && this.currentLon !== null) {
         
         const intersection = this.calculateIntersection(
           this.currentLat, this.currentLon, data.yaw, 

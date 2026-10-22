@@ -14,6 +14,7 @@ export class CommandService {
   private readonly pending = toSignal(this.mqtt.pending$, {requireSync: true});
   private readonly state = toSignal(this.mqtt.connection$, {requireSync: true});
   private readonly role = toSignal(this.mqtt.role$, {requireSync: true});
+  private readonly map = toSignal(this.mqtt.map$, {requireSync: true});
   readonly recording = toSignal(this.mqtt.recording$, {requireSync: true});
   private available(topic: string): boolean {
     this.tick();
@@ -21,7 +22,8 @@ export class CommandService {
   }
   readonly canUpdate = computed(() => this.available(TOPICS.indicators));
   readonly canTest = computed(() => this.available(TOPICS.mechatronics));
-  readonly canSetMark = computed(() => this.available(TOPICS.map));
+  readonly canSetMark = computed(() => this.available(TOPICS.map) &&
+    this.map()?.position_valid === true && this.map()?.gps_state === 1);
   readonly canStart = computed(() => {
     this.tick(); this.pending(); this.recording(); this.state(); this.role();
     return this.mqtt.canCommand(ClientCommandFactory.startRecording());

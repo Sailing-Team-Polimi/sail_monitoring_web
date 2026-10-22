@@ -1,6 +1,23 @@
-* text=auto
-*.sh text eol=lf
-Docker/Dockerfile text eol=lf
-*.yaml text eol=lf
-*.yml text eol=lf
-*.conf text eol=lf
+# Shared line endings on Windows, Linux and macOS.
+* text=auto eol=lf
+
+# Native Windows command scripts.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets must never undergo line-ending conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.db3 binary
+*.mcap binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.xlsx binary
