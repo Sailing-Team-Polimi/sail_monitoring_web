@@ -1,5 +1,7 @@
 # Polimi Sailing Team — Sail Monitoring Web
 
+_Ultimo aggiornamento: 31/10/2026_
+
 La pagina Staff **Diagnostics** riceve `sail_gui/data/diagnostic`.
 Il [contratto provvisorio v1](docs/diagnostics.md) descrive Raspberry, batterie e valori mancanti.
 L'indicatore nella navbar mostra **MQTT** con lo stato scritto più piccolo sotto:
@@ -265,3 +267,11 @@ Prima dell'utilizzo operativo:
 
 I test automatici non verificano le ACL reali, la disponibilità del broker, i servizi ROS
 o gli attuatori. Questi controlli devono essere completati sulla configurazione effettiva.
+
+## Tre ultrasuoni nella pagina Mechatron
+
+Il riquadro **Ultrasound (Raw)** contiene tre letture compatte: **SX**, **Centro**, **DX**. Le distanze sono visualizzate in metri con tre decimali; ogni lettura ha il proprio stato **OK**, **Non valida** oppure **Assente**. I codici di errore non vengono mostrati come distanze e dati scaduti o mancanti non diventano zeri.
+
+Il topic MQTT `sail_gui/data/mechatronics_data` trasporta il campo annidato `ultrasound`: `stamp`, `sequence_id`, `left_mm`, `center_mm`, `right_mm`, `left_valid`, `center_valid`, `right_valid`. Il campo separato `ultrasound_fresh` è calcolato da ROS rispetto al timestamp originale; la soglia predefinita è 0,3 s. Una perdita del flusso MQTT viene gestita anche dal timeout della sessione web. Con telemetria precedente priva del messaggio triplo, le distanze risultano assenti e le altre informazioni restano disponibili.
+
+La scelta **WAND / ULTRASOUND** nelle impostazioni rimane disponibile anche quando il sensore selezionato segnala un errore, purché connessione, autorizzazioni e stato del controllore siano aggiornati. La configurazione ROS avvia il PID con **WAND**; selezionando **ULTRASOUND** si usa la stima da ultrasuoni, abilitata anche con geometria provvisoria; le pose reali si configurano in `state_estimation/config/ultrasound_geometry.yaml` nella repository ROS.

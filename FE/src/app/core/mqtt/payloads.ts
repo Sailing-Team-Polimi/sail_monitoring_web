@@ -39,9 +39,23 @@ export function dashboardPayload(value: unknown): DashboardData {
   return {...data, sog: finite(data['sog']) * 3600 / 1852} as unknown as DashboardData;
 }
 export function mechatronicsPayload(value: unknown): MechatronicsData {
-  return numeric(value, ['servo_limit_max','servo_limit_min','kp','ki','kd','current_height_est_wand',
-    'current_height_est_ultrasound','ultrasound_data','height_target','flap_angle_out','servo_angle_out',
-    'roll','pitch','wand_angle']) as unknown as MechatronicsData;
+  const data = numeric(value, ['servo_limit_max','servo_limit_min','kp','ki','kd','current_height_est_wand',
+    'current_height_est_ultrasound','height_target','flap_angle_out','servo_angle_out',
+    'roll','pitch','wand_angle']);
+  // Older telemetry has no triple sample: retain other readings, show no distances.
+  if (data['ultrasound'] == null) return {...data, ultrasound: null, ultrasound_fresh: false} as unknown as MechatronicsData;
+  const sample = numeric(data['ultrasound'], ['sequence_id', 'left_mm', 'center_mm', 'right_mm']);
+  for (const key of ['sequence_id', 'left_mm', 'center_mm', 'right_mm']) {
+    const n = finite(sample[key]);
+    if (!Number.isInteger(n) || n < 0 || n > (key === 'sequence_id' ? 255 : 65535)) {
+      throw new Error('Misura ultrasuoni non valida');
+    }
+  }
+  for (const key of ['left_valid', 'center_valid', 'right_valid']) {
+    if (typeof sample[key] !== 'boolean') throw new Error('Validità ultrasuoni non valida');
+  }
+  if (typeof data['ultrasound_fresh'] !== 'boolean') throw new Error('Freschezza ultrasuoni non valida');
+  return data as unknown as MechatronicsData;
 }
 
 export function mapPayload(value: unknown): MapData {

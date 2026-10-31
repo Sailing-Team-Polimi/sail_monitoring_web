@@ -1,6 +1,7 @@
 @if (mqttState$ | async; as mqttState) {
   @if ({ 
-    sensorData: sensorData$ | async, 
+    sensorData: sensorData$ | async,
+    ultrasoundData: ultrasoundData$ | async,
     indicatorState: indicatorState$ | async,
     activeSensor: activeSensor$ | async 
   }; as vm) {
@@ -144,11 +145,20 @@
             </span>
           </div>
           
-          <div class="mechatron-panel mechatron-row">
-            <span class="mechatron-label">Ultrasound (Raw)</span>
-            <span class="mechatron-value-standard">
-              <app-mechatronics-sensor-card [value]="vm.sensorData?.ULTRASOUND_DATA?.value ?? 0" [unit]="vm.sensorData?.ULTRASOUND_DATA?.unit" [failed]="vm.sensorData?.ULTRASOUND_DATA?.failed ?? true"></app-mechatronics-sensor-card>
-            </span>
+          <div class="mechatron-panel ultrasound-panel" role="group" aria-label="Distanze ultrasuoni">
+            <span class="ultrasound-title">Ultrasound (Raw)</span>
+            <div class="ultrasound-readings">
+              @for (reading of vm.ultrasoundData; track reading.label) {
+                <div class="ultrasound-reading" [attr.data-state]="reading.state">
+                  <span class="ultrasound-position">{{ reading.label }}</span>
+                  <span class="ultrasound-distance">
+                    {{ reading.meters === null ? '—' : (reading.meters | number:'1.3-3') }}
+                    @if (reading.meters !== null) { <small>m</small> }
+                  </span>
+                  <span class="ultrasound-status">{{ reading.state === 'valid' ? 'OK' : reading.state === 'invalid' ? 'Non valida' : 'Assente' }}</span>
+                </div>
+              }
+            </div>
           </div>
         </div>
 

@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { map, distinctUntilChanged } from 'rxjs/operators';
 
 import { SensorUpdate } from '../../dtos/sensor/SensorUpdate';
+import { UltrasoundReading } from '../../dtos/sensor/TripleUltrasound';
 import { SensorType } from '../../dtos/sensor/SensorType';
 import { MechatronicsService } from '../../core/services/mechatronics.service';
 import { MechatronicsSensorCardComponent } from '../../components/mechatronics-sensor-card/mechatronics-sensor-card.component';
@@ -43,6 +44,7 @@ export class MechatronComponent {
 
   mqttState$: Observable<MqttConnectionStateMessage>;
   sensorData$: Observable<Record<SensorType, SensorUpdate & { failed: boolean }> | null>;
+  ultrasoundData$: Observable<UltrasoundReading[]>;
   recordingState$: Observable<RecordingState | null>;
   isRecording$: Observable<boolean>;
   indicatorState$: Observable<IndicatorsState | null>;
@@ -58,6 +60,7 @@ export class MechatronComponent {
     this.mqttState$ = this.dataWss.mqttState$;
 
     this.sensorData$ = this.mechatronicsService.snapshot$;
+    this.ultrasoundData$ = this.mechatronicsService.ultrasound$;
     this.recordingState$ = this.mechatronicsService.recordingState$;
 
     this.isRecording$ = this.mechatronicsService.recordingState$.pipe(

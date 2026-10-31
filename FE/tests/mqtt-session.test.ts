@@ -270,6 +270,24 @@ test('indicator commands obey fresh boat capability flags and use unqueued QoS 0
   assert.equal(client.published.length, 1);
 });
 
+test('a failed active height source can be switched, but stale or unknown state cannot', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  const change = commands.update(IndicatorType.ACTIVE_SENSOR, MethodType.CHANGE);
+  client.message(TOPICS.indicators, {indicators: [{indicator: 'ACTIVE_SENSOR', value: 1,
+    failed: true, can_increase: true, can_decrease: true}]});
+  assert.equal(session.canCommand(change), true);
+  session.send(change);
+  assert.deepEqual(client.published[0].payload, {indicator: 'ACTIVE_SENSOR', method: 'CHANGE'});
+  client.message(TOPICS.indicators, {indicators: [{indicator: 'ACTIVE_SENSOR', value: 99,
+    failed: true, can_increase: true}]});
+  assert.equal(session.canCommand(change), false);
+  client.message(TOPICS.indicators, {indicators: [{indicator: 'ACTIVE_SENSOR', value: 0,
+    failed: false, can_increase: true}]});
+  t.mock.timers.tick(APP_CONFIG.dataTimeoutMs + 1);
+  assert.equal(session.canCommand(change), false);
+});
+
 test('only Staff subscribes to and receives diagnostics; switching to Guest clears them', async t => {
   const {session, login} = setup(t);
   const diagnostic = () => session.diagnostic$.value;

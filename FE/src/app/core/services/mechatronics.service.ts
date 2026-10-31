@@ -1,7 +1,8 @@
 // FE/src/app/core/services/mechatronics.service.ts
 import { Injectable, OnDestroy } from '@angular/core';
-import { Subject, BehaviorSubject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subject, BehaviorSubject, Observable } from 'rxjs';
+import { map, takeUntil } from 'rxjs/operators';
+import { UltrasoundReading, ultrasoundReadings } from '../../dtos/sensor/TripleUltrasound';
 import { CommandService } from './command.service';
 import { TelemetryService } from './telemetry.service';
 import { MechatronicsData } from '../../dtos/MechatronicsData';
@@ -22,6 +23,7 @@ export class MechatronicsService implements OnDestroy {
   
   private readonly snapshotSubject = new BehaviorSubject<Record<string, any>>({});
   public readonly snapshot$ = this.snapshotSubject.asObservable();
+  public readonly ultrasound$: Observable<UltrasoundReading[]>;
 
   private readonly recordingStateSubject = new BehaviorSubject<RecordingState | null>(null);
   public readonly recordingState$ = this.recordingStateSubject.asObservable();
@@ -30,6 +32,7 @@ export class MechatronicsService implements OnDestroy {
   public readonly indicatorsState$ = this.indicatorsStateSubject.asObservable();
 
   constructor(private dataWs: TelemetryService, private commandWs: CommandService) {
+    this.ultrasound$ = this.dataWs.mechatronicsData$.pipe(map(ultrasoundReadings));
     this.dataWs.mechatronicsData$
       .pipe(takeUntil(this.destroy$))
       .subscribe((data: MechatronicsData | null) => {
@@ -43,7 +46,6 @@ export class MechatronicsService implements OnDestroy {
           [SensorType.KD]: { value: data.kd, unit: SensorUnitMap[SensorType.KD], failed: false },
           [SensorType.CURRENT_HEIGHT_EST_WAND]: { value: data.current_height_est_wand, unit: SensorUnitMap[SensorType.CURRENT_HEIGHT_EST_WAND], failed: false },
           [SensorType.CURRENT_HEIGHT_EST_ULTRASOUND]: { value: data.current_height_est_ultrasound, unit: SensorUnitMap[SensorType.CURRENT_HEIGHT_EST_ULTRASOUND], failed: false },
-          [SensorType.ULTRASOUND_DATA]: { value: data.ultrasound_data, unit: SensorUnitMap[SensorType.ULTRASOUND_DATA], failed: false },
           [SensorType.HEIGHT_TARGET]: { value: data.height_target, unit: SensorUnitMap[SensorType.HEIGHT_TARGET], failed: false },
           [SensorType.FLAP_ANGLE_OUT]: { value: data.flap_angle_out, unit: SensorUnitMap[SensorType.FLAP_ANGLE_OUT], failed: false },
           [SensorType.SERVO_ANGLE_OUT]: { value: data.servo_angle_out, unit: SensorUnitMap[SensorType.SERVO_ANGLE_OUT], failed: false },

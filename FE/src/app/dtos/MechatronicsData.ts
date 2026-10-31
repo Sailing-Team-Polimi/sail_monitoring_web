@@ -1,5 +1,6 @@
 // FE/src/app/dtos/MechatronicsData.ts
 import type { TimeStamp } from "./common/TimeStamp";
+import type { TripleUltrasound } from "./sensor/TripleUltrasound";
 
 export interface MechatronicsData {
     stamp: TimeStamp
@@ -14,7 +15,8 @@ export interface MechatronicsData {
     // COLONNA CENTRALE
     current_height_est_wand: number;     
     current_height_est_ultrasound: number; 
-    ultrasound_data: number;             
+    ultrasound: TripleUltrasound | null;
+    ultrasound_fresh: boolean;
     height_target: number;
     flap_angle_out: number;
 

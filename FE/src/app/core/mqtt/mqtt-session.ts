@@ -14,6 +14,7 @@ import type { RecordingState } from '../../dtos/state/RecordingState';
 import type { ClientCommandUnion } from '../../dtos/commands/ClientCommand';
 import { ClientCommandType } from '../../dtos/commands/ClientCommandType';
 import { MethodType } from '../../dtos/indicator/MethodType';
+import { IndicatorType } from '../../dtos/indicator/IndicatorType';
 import { MqttConnectionState as State, type MqttConnectionStateMessage } from '../../dtos/mqtt/Mqtt.connection.model';
 
 export type Connector = (url: string, options: IClientOptions) => MqttClient;
@@ -217,7 +218,12 @@ export class MqttSession {
         this.map$.value?.position_valid === true && this.map$.value?.gps_state === 1;
       case ClientCommandType.Update: {
         const indicator = this.indicators$.value?.[command.payload.indicator];
-        if (!this.fresh(TOPICS.indicators) || !indicator || indicator.failed) return false;
+        if (!this.fresh(TOPICS.indicators) || !indicator) return false;
+        // A failed height source must not prevent selecting the other sensor.
+        if (command.payload.indicator === IndicatorType.ACTIVE_SENSOR && command.payload.method === MethodType.CHANGE) {
+          return (indicator.value === 0 || indicator.value === 1) && (indicator.canIncrease || indicator.canDecrease);
+        }
+        if (indicator.failed) return false;
         if (command.payload.method === MethodType.INCREASE) return indicator.canIncrease;
         if (command.payload.method === MethodType.DECREASE) return indicator.canDecrease;
         return true;
