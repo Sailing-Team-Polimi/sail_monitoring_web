@@ -101,7 +101,17 @@ export function indicatorsPayload(value: unknown): IndicatorsState {
 export function recordingPayload(value: unknown): RecordingState {
   const data = object(value);
   if (typeof data['recording'] !== 'boolean') throw new Error('Stato registrazione non valido');
+  const header = object(data['header']);
+  const stamp = object(header['stamp']);
+  const sec = finite(stamp['sec']);
+  const nanosec = finite(stamp['nanosec']);
+  if (!Number.isInteger(sec) || sec < 0 || sec > 2147483647 ||
+      !Number.isInteger(nanosec) || nanosec < 0 || nanosec >= 1e9 ||
+      (sec === 0 && nanosec === 0) || typeof header['frame_id'] !== 'string') {
+    throw new Error('Timestamp registrazione non valido');
+  }
   return {
+    header: {stamp: {sec, nanosec}, frame_id: header['frame_id']},
     recording: data['recording'],
     lastError: typeof data['last_error'] === 'string' ? data['last_error'] : undefined,
     bagName: typeof data['bag_name'] === 'string' ? data['bag_name'] : undefined,

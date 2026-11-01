@@ -1,6 +1,6 @@
 # Polimi Sailing Team — Sail Monitoring Web
 
-_Ultimo aggiornamento: 31/10/2026_
+_Ultimo aggiornamento: 01/11/2026_
 
 La pagina Staff **Diagnostics** riceve `sail_gui/data/diagnostic`.
 Il [contratto provvisorio v1](docs/diagnostics.md) descrive Raspberry, batterie e valori mancanti.
@@ -213,7 +213,7 @@ I nomi usati dal frontend sono centralizzati in `src/app/core/mqtt/topics.ts`.
 | `sail_gui/data/map_data` | Posizione, vento, DTL/TTL e boe |
 | `sail_gui/data/mechatronics_data` | Altezze, PID, servo e flap |
 | `sail_gui/data/indicators` | Valori e disponibilità delle regolazioni |
-| `sail_gui/data/recording_state` | Stato registrazione, nome bag, errore |
+| `sail_gui/data/recording_state` | Header con istante della verifica, stato registrazione, nome bag, errore |
 | `sail_gui/cmd/set_mark` | Imposta boa, codici ROS: Comitato=0, Pin=1, Bolina=2 |
 | `sail_gui/cmd/update` | `{indicator, method}`, con INCREASE/DECREASE o CHANGE per i selettori |
 | `sail_gui/cmd/show_servo_angle` | `{command: "FLAP_MAX"}` oppure `"FLAP_MIN"` |
@@ -243,8 +243,9 @@ I messaggi sono validati; JSON errato, payload troppo grandi o coordinate imposs
   iniziale dagli aggiornamenti live, anche per lo stato registrazione pubblicato con retain.
 - Telemetria e stato registrazione scadono dopo 5 secondi senza nuovi campioni, configurabili.
   Lo stato rosbag nel progetto ROS viene pubblicato ogni 0,5 secondi.
-- La scadenza misura il tempo dall'arrivo nel browser, non certifica l'età del campione sul
-  sensore. Validità dei sensori e controlli operativi rimangono responsabilità dei nodi ROS.
+- Per lo stato registrazione si verifica anche l’età di `header.stamp`, senza rinnovare la
+  validità con pacchetti vecchi o duplicati. Per gli altri dati il timeout dall’arrivo nel browser
+  non certifica l’età del campione sul sensore. Validità dei sensori e controlli operativi rimangono responsabilità dei nodi ROS.
 - Nessuna mutua esclusione fra operatori diversi: gli ID separano le risposte ma non danno
   il controllo esclusivo della barca. Le eventuali regole di precedenza vanno gestite a bordo.
 - La traccia sulla mappa è locale alla sessione, limitata a 10.000 posizioni; non è uno storico condiviso.
@@ -275,3 +276,9 @@ Il riquadro **Ultrasound (Raw)** contiene tre letture compatte: **SX**, **Centro
 Il topic MQTT `sail_gui/data/mechatronics_data` trasporta il campo annidato `ultrasound`: `stamp`, `sequence_id`, `left_mm`, `center_mm`, `right_mm`, `left_valid`, `center_valid`, `right_valid`. Il campo separato `ultrasound_fresh` è calcolato da ROS rispetto al timestamp originale; la soglia predefinita è 0,3 s. Una perdita del flusso MQTT viene gestita anche dal timeout della sessione web. Con telemetria precedente priva del messaggio triplo, le distanze risultano assenti e le altre informazioni restano disponibili.
 
 La scelta **WAND / ULTRASOUND** nelle impostazioni rimane disponibile anche quando il sensore selezionato segnala un errore, purché connessione, autorizzazioni e stato del controllore siano aggiornati. La configurazione ROS avvia il PID con **WAND**; selezionando **ULTRASOUND** si usa la stima da ultrasuoni, abilitata anche con geometria provvisoria; le pose reali si configurano in `state_estimation/config/ultrasound_geometry.yaml` nella repository ROS.
+
+## Timestamp dello stato di registrazione
+
+`RecordingState` include `header.stamp`, con l’ora di sistema dell’ultima verifica del recorder. La web app conserva questo timestamp e usa `recordingTimeoutMs=5000` per controllare sia l’età originale sia la mancanza di nuovi aggiornamenti. Quando lo stato scade, mostra **STATO NON DISPONIBILE O SCADUTO** e disabilita Start/Stop. La tolleranza `recordingClockSkewToleranceMs=1000` accetta timestamp fino a un secondo nel futuro, senza estendere la scadenza a 5 secondi dei dati vecchi o il timeout senza nuovi campioni. Raspberry e browser devono restare ragionevolmente sincronizzati; i messaggi senza header non sono accettati.
+
+Configurazione, compatibilità e test: [README italiano](docs/recording_state/README.md) · [English README](docs/recording_state/README_ENG.md).

@@ -13,6 +13,10 @@ import { MqttConnectionState } from '../src/app/dtos/mqtt/Mqtt.connection.model'
 import { MarkType } from '../src/app/dtos/mark/MarkType';
 import { diagnosticSample } from './diagnostic-sample';
 
+function recordingSample(data: Record<string, unknown>, ms = Date.now()) {
+  return {...data, header: {stamp: {sec: Math.floor(ms / 1000), nanosec: (ms % 1000) * 1e6}, frame_id: ''}};
+}
+
 class FakeClient extends EventEmitter {
   connected = false;
   options: IClientOptions;
@@ -109,7 +113,7 @@ test('login timeout and logout cancel a pending connection', async t => {
 test('guest cannot send any command through the application', async t => {
   const {session, login} = setup(t);
   const client = await login('guest');
-  client.message(TOPICS.recording, {recording: false});
+  client.message(TOPICS.recording, recordingSample({recording: false}));
   session.send(commands.startRecording());
   session.send(commands.update(IndicatorType.KP, MethodType.INCREASE));
   assert.deepEqual(client.published, []);
@@ -119,10 +123,10 @@ test('recording requires live state, ignores retained state, prevents double cli
   const {session, login} = setup(t);
   const client = await login();
   session.send(commands.startRecording());
-  client.message(TOPICS.recording, {recording: false}, true);
+  client.message(TOPICS.recording, recordingSample({recording: false}), true);
   session.send(commands.startRecording());
   assert.equal(client.published.length, 0);
-  client.message(TOPICS.recording, {recording: false, bag_name: '', last_error: ''});
+  client.message(TOPICS.recording, recordingSample({recording: false, bag_name: '', last_error: ''}));
   session.send(commands.startRecording());
   session.send(commands.startRecording());
   assert.equal(client.published.length, 1);
@@ -137,13 +141,14 @@ test('recording requires live state, ignores retained state, prevents double cli
   assert.equal(session.pending$.value, false);
   assert.equal(session.recording$.value, null);
   assert.equal(session.canCommand(commands.stopRecording()), false);
-  client.message(TOPICS.recording, {recording: true, bag_name: 'boat-bag'});
+  t.mock.timers.tick(1);
+  client.message(TOPICS.recording, recordingSample({recording: true, bag_name: 'boat-bag'}));
   assert.equal(session.canCommand(commands.stopRecording()), true);
 });
 test('recording timeout never invents a stopped state or resends the command', async t => {
   const {session, login} = setup(t);
   const client = await login();
-  client.message(TOPICS.recording, {recording: true});
+  client.message(TOPICS.recording, recordingSample({recording: true}));
   session.send(commands.stopRecording());
   t.mock.timers.tick(APP_CONFIG.commandTimeoutMs + 1);
   assert.equal(session.recording$.value, null);
@@ -154,12 +159,13 @@ test('recording timeout never invents a stopped state or resends the command', a
 test('ROS failure and publication failure require a fresh state before retrying', async t => {
   const {session, login} = setup(t);
   const client = await login();
-  client.message(TOPICS.recording, {recording: false});
+  client.message(TOPICS.recording, recordingSample({recording: false}));
   session.send(commands.startRecording());
   client.message(TOPICS.startResponse, {requestId: client.published[0].payload['requestId'], success: false, error_message: 'service unavailable'});
   assert.match(session.feedback$.value, /service unavailable/);
   assert.equal(session.recording$.value, null);
-  client.message(TOPICS.recording, {recording: false});
+  t.mock.timers.tick(1);
+  client.message(TOPICS.recording, recordingSample({recording: false}));
   client.publishError = new Error('not authorized');
   session.send(commands.startRecording());
   assert.equal(session.pending$.value, false);
@@ -168,7 +174,7 @@ test('ROS failure and publication failure require a fresh state before retrying'
 test('outage discards commands, clears old data and reconnects using a fresh client', async t => {
   const {session, login, clients} = setup(t);
   const old = await login();
-  old.message(TOPICS.recording, {recording: false});
+  old.message(TOPICS.recording, recordingSample({recording: false}));
   session.send(commands.startRecording());
   old.connected = false; old.emit('close');
   assert.equal(session.pending$.value, false);
@@ -185,7 +191,7 @@ test('outage discards commands, clears old data and reconnects using a fresh cli
   assert.equal(session.connection$.value.status, MqttConnectionState.CONNECTED);
   assert.match(session.feedback$.value, /esito sconosciuto/);
   assert.equal(fresh.published.length, 0);
-  old.message(TOPICS.recording, {recording: true});
+  old.message(TOPICS.recording, recordingSample({recording: true}));
   assert.equal(session.recording$.value, null);
 });
 test('unauthorized DISCONNECT ends only this session and does not loop reconnect', async t => {
@@ -237,9 +243,9 @@ test('stale, oversized or malformed payloads never enable commands', async t => 
   const client = await login();
   client.message(TOPICS.recording, {recording: 'false'});
   client.emit('message', TOPICS.recording, Buffer.from('{bad json'), {retain: false});
-  client.message(TOPICS.recording, {recording: false, padding: 'x'.repeat(APP_CONFIG.maxPayloadBytes)});
+  client.message(TOPICS.recording, recordingSample({recording: false, padding: 'x'.repeat(APP_CONFIG.maxPayloadBytes)}));
   assert.equal(session.canCommand(commands.startRecording()), false);
-  client.message(TOPICS.recording, {recording: false});
+  client.message(TOPICS.recording, recordingSample({recording: false}));
   t.mock.timers.tick(APP_CONFIG.recordingTimeoutMs + 500);
   assert.equal(session.recording$.value, null);
   assert.equal(session.canCommand(commands.startRecording()), false);
@@ -247,7 +253,7 @@ test('stale, oversized or malformed payloads never enable commands', async t => 
 test('logout clears credentials, pending requests and all cached boat data', async t => {
   const {session, login} = setup(t);
   const client = await login();
-  client.message(TOPICS.recording, {recording: false});
+  client.message(TOPICS.recording, recordingSample({recording: false}));
   session.send(commands.startRecording());
   session.logout();
   assert.equal(session.pending$.value, false);
@@ -350,4 +356,101 @@ test('live MQTT does not allow buoy commands for predicted or unavailable GPS', 
   assert.equal(client.published.length, 1);
   t.mock.timers.tick(APP_CONFIG.dataTimeoutMs + 1);
   assert.equal(session.canCommand(command), false);
+});
+
+
+test('source age expires a delayed recording state without granting a new full timeout', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  client.message(TOPICS.recording, recordingSample({recording: true}, Date.now() - 4500));
+  assert.equal(session.canCommand(commands.stopRecording()), true);
+  t.mock.timers.tick(500);
+  assert.equal(session.recording$.value, null);
+  assert.equal(session.canCommand(commands.startRecording()), false);
+  assert.equal(session.canCommand(commands.stopRecording()), false);
+});
+
+test('old, future, missing and zero timestamps cannot enable recording controls', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  for (const payload of [
+    {recording: false}, recordingSample({recording: false}, 0),
+    recordingSample({recording: false}, Date.now() - APP_CONFIG.recordingTimeoutMs),
+    recordingSample({recording: false}, Date.now() + APP_CONFIG.recordingClockSkewToleranceMs + 1),
+  ]) {
+    client.message(TOPICS.recording, payload);
+    assert.equal(session.recording$.value, null);
+    assert.equal(session.canCommand(commands.startRecording()), false);
+  }
+});
+
+test('duplicate or reordered samples cannot replace state or renew its lifetime', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  const original = recordingSample({recording: true});
+  client.message(TOPICS.recording, original);
+  t.mock.timers.tick(3000);
+  client.message(TOPICS.recording, {...original, recording: false});
+  client.message(TOPICS.recording, recordingSample({recording: false}, Date.now() - 4000));
+  assert.equal(session.recording$.value?.recording, true);
+  t.mock.timers.tick(2000);
+  assert.equal(session.recording$.value, null);
+  client.message(TOPICS.recording, original);
+  assert.equal(session.canCommand(commands.stopRecording()), false);
+  client.message(TOPICS.recording, recordingSample({recording: false}));
+  assert.equal(session.canCommand(commands.startRecording()), true);
+});
+
+test('retained timestamps are ignored and command responses cannot refresh expired state', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  client.message(TOPICS.recording, recordingSample({recording: false}), true);
+  assert.equal(session.recording$.value, null);
+  const original = recordingSample({recording: false});
+  client.message(TOPICS.recording, original);
+  session.send(commands.startRecording());
+  const requestId = client.published[0].payload['requestId'];
+  client.message(TOPICS.startResponse, {requestId, success: true});
+  client.message(TOPICS.recording, original);
+  assert.equal(session.recording$.value, null);
+});
+
+
+for (const ahead of [100, 1000]) {
+  test(`recording accepts ${ahead} ms clock skew but expires after 5 seconds of silence`, async t => {
+    const {session, login} = setup(t);
+    const client = await login();
+    const sample = recordingSample({recording: true}, Date.now() + ahead);
+    client.message(TOPICS.recording, sample);
+    assert.equal(session.canCommand(commands.stopRecording()), true);
+    t.mock.timers.tick(4000);
+    client.message(TOPICS.recording, sample); // Duplicate cannot renew receipt time.
+    t.mock.timers.tick(1000);
+    assert.equal(session.recording$.value, null);
+    assert.equal(session.canCommand(commands.stopRecording()), false);
+    client.message(TOPICS.recording, recordingSample({recording: false}, Date.now() + ahead));
+    assert.equal(session.canCommand(commands.startRecording()), true);
+  });
+}
+
+test('tolerance can be disabled or reduced without admitting over-age samples', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  session.config.recordingClockSkewToleranceMs = 0;
+  client.message(TOPICS.recording, recordingSample({recording: false}, Date.now() + 1));
+  assert.equal(session.canCommand(commands.startRecording()), false);
+  session.config.recordingClockSkewToleranceMs = 100;
+  client.message(TOPICS.recording, recordingSample({recording: false}, Date.now() + 101));
+  assert.equal(session.canCommand(commands.startRecording()), false);
+  client.message(TOPICS.recording, recordingSample({recording: false}, Date.now() - 5000));
+  assert.equal(session.canCommand(commands.startRecording()), false);
+  client.message(TOPICS.recording, recordingSample({recording: false}, Date.now() + 100));
+  assert.equal(session.canCommand(commands.startRecording()), true);
+});
+
+test('invalid clock tolerance configuration is rejected before starting a session', () => {
+  for (const value of [-1, 5000, NaN, Infinity]) {
+    assert.throws(() => new MqttSession(() => {throw new Error('No connection expected');},
+      {...APP_CONFIG, recordingClockSkewToleranceMs: value}), /Tolleranza/);
+  }
 });

@@ -14,7 +14,10 @@ export const APP_CONFIG = {
   reconnectMs: 5000,
   dataTimeoutMs: 5000,
   diagnosticTimeoutMs: 15000,
+  // Maximum source age AND silence since receipt.
   recordingTimeoutMs: 5000,
+  // Only tolerates timestamps slightly ahead; never adds time to old samples.
+  recordingClockSkewToleranceMs: 1000,
   commandTimeoutMs: 10000,
   maxPayloadBytes: 65536,
 };

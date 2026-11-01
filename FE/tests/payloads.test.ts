@@ -33,8 +33,8 @@ test('indicator lists become keyed state with conservative capability defaults',
   assert.equal(Object.keys(data).length, 2);
 });
 test('recording maps errors and bag name without coercing strings to booleans', () => {
-  assert.deepEqual(recordingPayload({recording: true, last_error: 'disk full', bag_name: 'run-1'}), {
-    recording: true, lastError: 'disk full', bagName: 'run-1',
+  assert.deepEqual(recordingPayload({header: {stamp, frame_id: ''}, recording: true, last_error: 'disk full', bag_name: 'run-1'}), {
+    header: {stamp, frame_id: ''}, recording: true, lastError: 'disk full', bagName: 'run-1',
   });
   assert.throws(() => recordingPayload({recording: 'false'}));
 });
@@ -92,4 +92,14 @@ test('GPS quality distinguishes predictions, missing metadata and invalid estima
     assert.equal(result.ttl, -1);
   }
   assert.equal(mapPayload({...raw, gps_covariance_fallback: true}).gps_covariance_fallback, true);
+});
+
+
+test('recording requires a complete header with a nonzero valid ROS timestamp', () => {
+  for (const stamp of [{sec: 0, nanosec: 0}, {sec: -1, nanosec: 0},
+      {sec: 1.5, nanosec: 0}, {sec: 1, nanosec: 1e9}, {sec: 1, nanosec: -1},
+      {sec: 1, nanosec: 0.5}, {sec: '1', nanosec: 0}]) {
+    assert.throws(() => recordingPayload({recording: true, header: {stamp, frame_id: ''}}));
+  }
+  assert.throws(() => recordingPayload({recording: false}));
 });

@@ -38,6 +38,7 @@ export class MqttSession {
   private credentials?: Credentials;
   private ready = false;
   private seen = new Map<string, number>();
+  private lastRecordingStamp?: RecordingState['header']['stamp'];
   private retry?: ReturnType<typeof setTimeout>;
   private deadline?: ReturnType<typeof setTimeout>;
   private pending?: Pending;
@@ -46,6 +47,11 @@ export class MqttSession {
   private readonly expiryTimer: ReturnType<typeof setInterval>;
 
   constructor(private readonly connector: Connector, readonly config: AppConfig) {
+    if (!Number.isFinite(config.recordingTimeoutMs) || config.recordingTimeoutMs <= 0 ||
+        !Number.isFinite(config.recordingClockSkewToleranceMs) || config.recordingClockSkewToleranceMs < 0 ||
+        config.recordingClockSkewToleranceMs >= config.recordingTimeoutMs) {
+      throw new Error('Tolleranza orologio registrazione non valida: deve essere finita, non negativa e minore del timeout.');
+    }
     this.expiryTimer = setInterval(() => this.expire(), 500);
   }
 
@@ -190,7 +196,16 @@ export class MqttSession {
       case TOPICS.map: this.map$.next(mapPayload(data)); break;
       case TOPICS.mechatronics: this.mechatronics$.next(mechatronicsPayload(data)); break;
       case TOPICS.indicators: this.indicators$.next(indicatorsPayload(data)); break;
-      case TOPICS.recording: this.recording$.next(recordingPayload(data)); break;
+      case TOPICS.recording: {
+        const state = recordingPayload(data);
+        const stamp = state.header.stamp;
+        const previous = this.lastRecordingStamp;
+        if (!this.recordingSourceFresh(state) || (previous &&
+            (stamp.sec < previous.sec || (stamp.sec === previous.sec && stamp.nanosec <= previous.nanosec)))) return;
+        this.lastRecordingStamp = stamp;
+        this.recording$.next(state);
+        break;
+      }
       case TOPICS.diagnostic:
         if (this.role$.value !== AuthRoles.Admin) return;
         this.diagnostic$.next(diagnosticPayload(data)); break;
@@ -202,7 +217,15 @@ export class MqttSession {
     this.tick$.next(this.tick$.value + 1);
   }
 
+  private recordingSourceFresh(state: RecordingState): boolean {
+    const stamp = state.header.stamp;
+    const age = Date.now() - (stamp.sec * 1000 + stamp.nanosec / 1e6);
+    return age >= -this.config.recordingClockSkewToleranceMs && age < this.config.recordingTimeoutMs;
+  }
+
   fresh(topic: string): boolean {
+    if (topic === TOPICS.recording &&
+        (!this.recording$.value || !this.recordingSourceFresh(this.recording$.value))) return false;
     const time = this.seen.get(topic);
     const ttl = topic === TOPICS.diagnostic ? this.config.diagnosticTimeoutMs
       : topic === TOPICS.recording ? this.config.recordingTimeoutMs : this.config.dataTimeoutMs;
@@ -290,6 +313,7 @@ export class MqttSession {
   }
   private clearData(): void {
     this.seen.clear();
+    this.lastRecordingStamp = undefined;
     this.dashboard$.next(null); this.map$.next(null); this.mechatronics$.next(null);
     this.indicators$.next(null); this.recording$.next(null);
     this.diagnostic$.next(null);

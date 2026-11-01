@@ -76,7 +76,7 @@
               @if (commands.recording()?.lastError) { <p role="alert">{{ commands.recording()?.lastError }}</p> }
               @if (commands.recording()?.bagName) { <p>{{ commands.recording()?.bagName }}</p> }
               <span class="mechatron-record-text" [class.text-red-500]="((isRecording$ | async) ?? false)" [class.text-gray-400]="!((isRecording$ | async) ?? false)">
-                {{ !commands.recording() ? "STATO NON DISPONIBILE" : commands.recording()?.recording ? "RECORDING" : "NOT RECORDING" }}
+                {{ !commands.recording() ? "STATO NON DISPONIBILE O SCADUTO" : commands.recording()?.recording ? "RECORDING" : "NOT RECORDING" }}
               </span>
               @if (((isRecording$ | async) ?? false)) {
                 <span class="mechatron-record-indicator"></span>
