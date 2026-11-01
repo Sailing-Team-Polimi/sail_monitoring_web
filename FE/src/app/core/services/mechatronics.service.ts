@@ -39,19 +39,19 @@ export class MechatronicsService implements OnDestroy {
         if (!data) { this.snapshotSubject.next({}); return; }
 
         const mappedData: Record<string, any> = {
-          [SensorType.SERVO_LIMIT_MAX]: { value: data.servo_limit_max, unit: SensorUnitMap[SensorType.SERVO_LIMIT_MAX], failed: false },
-          [SensorType.SERVO_LIMIT_MIN]: { value: data.servo_limit_min, unit: SensorUnitMap[SensorType.SERVO_LIMIT_MIN], failed: false },
-          [SensorType.KP]: { value: data.kp, unit: SensorUnitMap[SensorType.KP], failed: false },
-          [SensorType.KI]: { value: data.ki, unit: SensorUnitMap[SensorType.KI], failed: false },
-          [SensorType.KD]: { value: data.kd, unit: SensorUnitMap[SensorType.KD], failed: false },
-          [SensorType.CURRENT_HEIGHT_EST_WAND]: { value: data.current_height_est_wand, unit: SensorUnitMap[SensorType.CURRENT_HEIGHT_EST_WAND], failed: false },
-          [SensorType.CURRENT_HEIGHT_EST_ULTRASOUND]: { value: data.current_height_est_ultrasound, unit: SensorUnitMap[SensorType.CURRENT_HEIGHT_EST_ULTRASOUND], failed: false },
-          [SensorType.HEIGHT_TARGET]: { value: data.height_target, unit: SensorUnitMap[SensorType.HEIGHT_TARGET], failed: false },
-          [SensorType.FLAP_ANGLE_OUT]: { value: data.flap_angle_out, unit: SensorUnitMap[SensorType.FLAP_ANGLE_OUT], failed: false },
-          [SensorType.SERVO_ANGLE_OUT]: { value: data.servo_angle_out, unit: SensorUnitMap[SensorType.SERVO_ANGLE_OUT], failed: false },
-          [SensorType.ROLL]: { value: data.roll, unit: SensorUnitMap[SensorType.ROLL], failed: false },
-          [SensorType.PITCH]: { value: data.pitch, unit: SensorUnitMap[SensorType.PITCH], failed: false },
-          [SensorType.WAND_ANGLE]: { value: data.wand_angle, unit: SensorUnitMap[SensorType.WAND_ANGLE], failed: false }
+          [SensorType.SERVO_LIMIT_MAX]: { value: data.servo_limit_max, unit: SensorUnitMap[SensorType.SERVO_LIMIT_MAX], failed: data.indicators_fresh !== true },
+          [SensorType.SERVO_LIMIT_MIN]: { value: data.servo_limit_min, unit: SensorUnitMap[SensorType.SERVO_LIMIT_MIN], failed: data.indicators_fresh !== true },
+          [SensorType.KP]: { value: data.kp, unit: SensorUnitMap[SensorType.KP], failed: data.indicators_fresh !== true },
+          [SensorType.KI]: { value: data.ki, unit: SensorUnitMap[SensorType.KI], failed: data.indicators_fresh !== true },
+          [SensorType.KD]: { value: data.kd, unit: SensorUnitMap[SensorType.KD], failed: data.indicators_fresh !== true },
+          [SensorType.CURRENT_HEIGHT_EST_WAND]: { value: data.current_height_est_wand, unit: SensorUnitMap[SensorType.CURRENT_HEIGHT_EST_WAND], failed: data.height_wand_fresh !== true },
+          [SensorType.CURRENT_HEIGHT_EST_ULTRASOUND]: { value: data.current_height_est_ultrasound, unit: SensorUnitMap[SensorType.CURRENT_HEIGHT_EST_ULTRASOUND], failed: data.height_ultrasound_fresh !== true },
+          [SensorType.HEIGHT_TARGET]: { value: data.height_target, unit: SensorUnitMap[SensorType.HEIGHT_TARGET], failed: data.indicators_fresh !== true },
+          [SensorType.FLAP_ANGLE_OUT]: { value: data.flap_angle_out, unit: SensorUnitMap[SensorType.FLAP_ANGLE_OUT], failed: data.flap_command_fresh !== true },
+          [SensorType.SERVO_ANGLE_OUT]: { value: data.servo_angle_out, unit: SensorUnitMap[SensorType.SERVO_ANGLE_OUT], failed: data.servo_command_fresh !== true },
+          [SensorType.ROLL]: { value: data.roll, unit: SensorUnitMap[SensorType.ROLL], failed: data.imu_fresh !== true },
+          [SensorType.PITCH]: { value: data.pitch, unit: SensorUnitMap[SensorType.PITCH], failed: data.imu_fresh !== true },
+          [SensorType.WAND_ANGLE]: { value: data.wand_angle, unit: SensorUnitMap[SensorType.WAND_ANGLE], failed: data.wand_fresh !== true }
         };
 
         this.snapshotSubject.next(mappedData);

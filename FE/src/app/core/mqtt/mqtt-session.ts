@@ -2,6 +2,7 @@ import { StateCell as BehaviorSubject } from './state-cell';
 import type { IClientOptions, MqttClient } from 'mqtt';
 import { type AppConfig, brokerUrl, roleForUsername } from './app-config';
 import { TOPICS } from './topics';
+import { controlDeadlines } from './control-freshness';
 import { diagnosticPayload } from './diagnostic-payload';
 import type { DiagnosticData } from '../../dtos/DiagnosticData';
 import { commandPayload, dashboardPayload, indicatorsPayload, mapPayload, mechatronicsPayload, object, recordingPayload } from './payloads';
@@ -38,6 +39,11 @@ export class MqttSession {
   private credentials?: Credentials;
   private ready = false;
   private seen = new Map<string, number>();
+  private indicatorDeadline = 0;
+  private lastIndicatorSource = '';
+  private mechDeadlines: Record<string, number> = {};
+  private lastMechSent = 0;
+  private lastMechSource = '';
   private lastRecordingStamp?: RecordingState['header']['stamp'];
   private retry?: ReturnType<typeof setTimeout>;
   private deadline?: ReturnType<typeof setTimeout>;
@@ -112,7 +118,7 @@ export class MqttSession {
     client.on('connect', () => {
       if (!current()) return;
       // Visualization needs heights/active sensor even for guests. Hidden pages do not hide data.
-      const subscriptions: string[] = [TOPICS.dashboard, TOPICS.mechatronics, TOPICS.indicators];
+      const subscriptions: string[] = [TOPICS.dashboard, TOPICS.mechatronics];
       if (credentials.role === AuthRoles.Admin) subscriptions.push(TOPICS.map, TOPICS.recording, TOPICS.diagnostic, TOPICS.startResponse, TOPICS.stopResponse);
       client.subscribe(subscriptions, {qos: 0, rap: false}, (error, grants) => {
         if (!current()) return;
@@ -194,8 +200,36 @@ export class MqttSession {
     switch (topic) {
       case TOPICS.dashboard: this.dashboard$.next(dashboardPayload(data)); break;
       case TOPICS.map: this.map$.next(mapPayload(data)); break;
-      case TOPICS.mechatronics: this.mechatronics$.next(mechatronicsPayload(data)); break;
-      case TOPICS.indicators: this.indicators$.next(indicatorsPayload(data)); break;
+      case TOPICS.mechatronics: {
+        const parsed = mechatronicsPayload(data);
+        const envelope = object(data)['control_freshness'];
+        const sent = envelope ? Number(object(envelope)['sent_at_unix_ms']) : 0;
+        const validSent = Number.isFinite(sent) && sent > 0 && sent <= Date.now() + 1000;
+        const aggregateSource = JSON.stringify(parsed.header);
+        if ((validSent && sent < this.lastMechSent) || aggregateSource === this.lastMechSource) return;
+        const deadlines = controlDeadlines(data, Date.now());
+        let state: IndicatorsState | null = null;
+        let indicatorSource = '';
+        let deadline = 0;
+        if (parsed.indicators_fresh === true && (deadlines['indicators'] ?? 0) > Date.now()) {
+          try {
+            state = indicatorsPayload(parsed.indicators);
+            indicatorSource = JSON.stringify(object(parsed.indicators)['header']);
+            deadline = deadlines['indicators'];
+            // A new sensor aggregate cannot extend the same PID state's lifetime.
+            if (indicatorSource === this.lastIndicatorSource) deadline = Math.min(deadline, this.indicatorDeadline);
+            if (deadline <= Date.now()) state = null;
+          } catch { state = null; }
+        }
+        if (validSent) this.lastMechSent = sent;
+        this.lastMechSource = aggregateSource;
+        this.mechDeadlines = {...deadlines, indicators: state ? deadline : 0};
+        if (indicatorSource) this.lastIndicatorSource = indicatorSource;
+        this.indicatorDeadline = state ? deadline : 0;
+        this.indicators$.next(state);
+        this.mechatronics$.next(this.freshControlValues(parsed));
+        break;
+      }
       case TOPICS.recording: {
         const state = recordingPayload(data);
         const stamp = state.header.stamp;
@@ -223,6 +257,14 @@ export class MqttSession {
     return age >= -this.config.recordingClockSkewToleranceMs && age < this.config.recordingTimeoutMs;
   }
 
+  private freshControlValues(data: MechatronicsData): MechatronicsData {
+    const now = Date.now();
+    return {...data,
+      flap_command_fresh: data.flap_command_fresh === true && now < (this.mechDeadlines['flap'] ?? 0),
+      servo_command_fresh: data.servo_command_fresh === true && now < (this.mechDeadlines['servo'] ?? 0),
+      indicators_fresh: data.indicators_fresh === true && now < (this.mechDeadlines['indicators'] ?? 0)};
+  }
+
   fresh(topic: string): boolean {
     if (topic === TOPICS.recording &&
         (!this.recording$.value || !this.recordingSourceFresh(this.recording$.value))) return false;
@@ -230,6 +272,11 @@ export class MqttSession {
     const ttl = topic === TOPICS.diagnostic ? this.config.diagnosticTimeoutMs
       : topic === TOPICS.recording ? this.config.recordingTimeoutMs : this.config.dataTimeoutMs;
     return time !== undefined && Date.now() - time < ttl;
+  }
+
+  indicatorsFresh(): boolean {
+    return this.fresh(TOPICS.mechatronics) && this.indicators$.value !== null &&
+      this.mechatronics$.value?.indicators_fresh === true && Date.now() < this.indicatorDeadline;
   }
 
   canCommand(command: ClientCommandUnion): boolean {
@@ -241,7 +288,7 @@ export class MqttSession {
         this.map$.value?.position_valid === true && this.map$.value?.gps_state === 1;
       case ClientCommandType.Update: {
         const indicator = this.indicators$.value?.[command.payload.indicator];
-        if (!this.fresh(TOPICS.indicators) || !indicator) return false;
+        if (!this.indicatorsFresh() || !indicator) return false;
         // A failed height source must not prevent selecting the other sensor.
         if (command.payload.indicator === IndicatorType.ACTIVE_SENSOR && command.payload.method === MethodType.CHANGE) {
           return (indicator.value === 0 || indicator.value === 1) && (indicator.canIncrease || indicator.canDecrease);
@@ -251,7 +298,7 @@ export class MqttSession {
         if (command.payload.method === MethodType.DECREASE) return indicator.canDecrease;
         return true;
       }
-      case ClientCommandType.TestCommand: return this.fresh(TOPICS.mechatronics);
+      case ClientCommandType.TestCommand: return this.indicatorsFresh();
     }
   }
 
@@ -313,6 +360,8 @@ export class MqttSession {
   }
   private clearData(): void {
     this.seen.clear();
+    this.indicatorDeadline = 0; this.lastIndicatorSource = '';
+    this.mechDeadlines = {}; this.lastMechSent = 0; this.lastMechSource = '';
     this.lastRecordingStamp = undefined;
     this.dashboard$.next(null); this.map$.next(null); this.mechatronics$.next(null);
     this.indicators$.next(null); this.recording$.next(null);
@@ -320,11 +369,18 @@ export class MqttSession {
     this.tick$.next(this.tick$.value + 1);
   }
   private expire(): void {
+    const mech = this.mechatronics$.value;
+    if (mech) {
+      const valid = this.freshControlValues(mech);
+      if (valid.flap_command_fresh !== mech.flap_command_fresh ||
+          valid.servo_command_fresh !== mech.servo_command_fresh ||
+          valid.indicators_fresh !== mech.indicators_fresh) this.mechatronics$.next(valid);
+    }
     if (!this.fresh(TOPICS.diagnostic) && this.diagnostic$.value) this.diagnostic$.next(null);
     if (!this.fresh(TOPICS.dashboard) && this.dashboard$.value) this.dashboard$.next(null);
     if (!this.fresh(TOPICS.map) && this.map$.value) this.map$.next(null);
     if (!this.fresh(TOPICS.mechatronics) && this.mechatronics$.value) this.mechatronics$.next(null);
-    if (!this.fresh(TOPICS.indicators) && this.indicators$.value) this.indicators$.next(null);
+    if ((!this.fresh(TOPICS.mechatronics) || Date.now() >= this.indicatorDeadline) && this.indicators$.value) this.indicators$.next(null);
     if (!this.fresh(TOPICS.recording) && this.recording$.value) this.recording$.next(null);
     this.tick$.next(this.tick$.value + 1);
   }

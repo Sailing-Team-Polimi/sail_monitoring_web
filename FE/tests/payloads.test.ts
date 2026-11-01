@@ -22,7 +22,7 @@ test('ROS numeric buoy codes map to labels and back without swapping committee a
   assert.throws(() => commandPayload(commands.setMark({type: MarkType.PIN, lat: NaN, lon: 0})));
 });
 test('indicator lists become keyed state with conservative capability defaults', () => {
-  const data = indicatorsPayload({indicators: [
+  const data = indicatorsPayload({header: {stamp, frame_id: ''}, indicators: [
     {indicator: 'KP', value: 2, failed: false, can_increase: true, can_decrease: false},
     {indicator: 'ACTIVE_SENSOR', value: 1},
     {indicator: 'UNKNOWN', value: 1},
@@ -63,7 +63,8 @@ test('dashboard converts ROS SOG to knots once without changing wind speeds or t
   const raw = {stamp, roll: 1, pitch: 2, yaw: 3, sog: 1.852, vmg: -2, twa: 6, twd: 7, tws: 8};
   const converted = dashboardPayload(raw);
   assert.ok(Math.abs(converted.sog - 3.6) < 1e-12);
-  assert.deepEqual({...converted, sog: raw.sog}, raw);
+  assert.deepEqual({...converted, sog: raw.sog},
+    {...raw, imu_fresh: false, velocity_fresh: false, wind_fresh: false});
   assert.equal(raw.sog, 1.852);
   assert.equal(dashboardPayload({...raw, sog: 0}).sog, 0);
   assert.equal(dashboardPayload(raw).sog, converted.sog);
@@ -102,4 +103,26 @@ test('recording requires a complete header with a nonzero valid ROS timestamp', 
     assert.throws(() => recordingPayload({recording: true, header: {stamp, frame_id: ''}}));
   }
   assert.throws(() => recordingPayload({recording: false}));
+});
+
+test('aggregates keep source flags independent and never infer freshness from an aggregate stamp', () => {
+  const base = {stamp, roll: 1, pitch: 2, yaw: 3, sog: 4, vmg: 5, twa: 6, twd: 7, tws: 8};
+  const data = dashboardPayload({...base, imu_fresh: false, velocity_fresh: true, wind_fresh: false});
+  assert.equal(data.imu_fresh, false);
+  assert.equal(data.velocity_fresh, true);
+  assert.equal(data.wind_fresh, false);
+  assert.equal(dashboardPayload(base).imu_fresh, false);
+  assert.equal(dashboardPayload({...base, wind_fresh: 'true'}).wind_fresh, false);
+  const map = mapPayload({stamp, lat: 45, lon: 10, yaw: 20, twd: 30, tws: 4, dtl: 12, ttl: 6,
+    position_valid: true, gps_state: 1, horizontal_stddev_m: 1, imu_fresh: false, wind_fresh: false});
+  assert.equal(map.position_valid, true);
+  assert.equal(map.imu_fresh, false);
+  assert.equal(map.wind_fresh, false);
+  const mech = mechatronicsPayload({header: {stamp, frame_id: ''}, servo_limit_max: 74, servo_limit_min: 0,
+    kp: 26, ki: 1, kd: 0, current_height_est_wand: 0.5, current_height_est_ultrasound: 0.6,
+    height_target: 0.5, flap_angle_out: 0, servo_angle_out: 0, roll: 0, pitch: 0, wand_angle: 0,
+    height_wand_fresh: false, height_ultrasound_fresh: true});
+  assert.equal(mech.height_wand_fresh, false);
+  assert.equal(mech.height_ultrasound_fresh, true);
+  assert.equal(mech.wand_fresh, false);
 });

@@ -2,7 +2,6 @@ export const TOPICS = {
   dashboard: 'sail_gui/data/dashboard_data',
   map: 'sail_gui/data/map_data',
   mechatronics: 'sail_gui/data/mechatronics_data',
-  indicators: 'sail_gui/data/indicators',
   recording: 'sail_gui/data/recording_state',
   diagnostic: 'sail_gui/data/diagnostics',
   setMark: 'sail_gui/cmd/set_mark',

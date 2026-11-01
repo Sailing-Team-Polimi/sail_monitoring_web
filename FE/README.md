@@ -103,7 +103,7 @@ Regole più precise, se disponibili nel broker scelto:
 
 | Credenziale | Subscribe | Publish |
 | --- | --- | --- |
-| Ospite | `sail_gui/data/dashboard_data`, `sail_gui/data/mechatronics_data`, `sail_gui/data/indicators` | Nessuno |
+| Ospite | `sail_gui/data/dashboard_data`, `sail_gui/data/mechatronics_data` | Nessuno |
 | Operatore | `sail_gui/data/#`, `sail_gui/rsp/#` | `sail_gui/cmd/#` |
 | Raspberry telemetria | Nessuno | `sail_gui/data/#` |
 | Raspberry comandi | `sail_gui/cmd/#` | `sail_gui/rsp/#` |
@@ -211,8 +211,7 @@ I nomi usati dal frontend sono centralizzati in `src/app/core/mqtt/topics.ts`.
 | --- | --- |
 | `sail_gui/data/dashboard_data` | Roll, pitch, yaw, velocità, VMG e vento |
 | `sail_gui/data/map_data` | Posizione, vento, DTL/TTL e boe |
-| `sail_gui/data/mechatronics_data` | Altezze, PID, servo e flap |
-| `sail_gui/data/indicators` | Valori e disponibilità delle regolazioni |
+| `sail_gui/data/mechatronics_data` | Altezze, PID, servo, flap e indicatori con capacità dei pulsanti |
 | `sail_gui/data/recording_state` | Header con istante della verifica, stato registrazione, nome bag, errore |
 | `sail_gui/cmd/set_mark` | Imposta boa, codici ROS: Comitato=0, Pin=1, Bolina=2 |
 | `sail_gui/cmd/update` | `{indicator, method}`, con INCREASE/DECREASE o CHANGE per i selettori |
@@ -282,3 +281,11 @@ La scelta **WAND / ULTRASOUND** nelle impostazioni rimane disponibile anche quan
 `RecordingState` include `header.stamp`, con l’ora di sistema dell’ultima verifica del recorder. La web app conserva questo timestamp e usa `recordingTimeoutMs=5000` per controllare sia l’età originale sia la mancanza di nuovi aggiornamenti. Quando lo stato scade, mostra **STATO NON DISPONIBILE O SCADUTO** e disabilita Start/Stop. La tolleranza `recordingClockSkewToleranceMs=1000` accetta timestamp fino a un secondo nel futuro, senza estendere la scadenza a 5 secondi dei dati vecchi o il timeout senza nuovi campioni. Raspberry e browser devono restare ragionevolmente sincronizzati; i messaggi senza header non sono accettati.
 
 Configurazione, compatibilità e test: [README italiano](docs/recording_state/README.md) · [English README](docs/recording_state/README_ENG.md).
+
+## Validità dei comandi del controllo
+
+La [guida in italiano](docs/control_commands/README.md) e la [versione inglese](docs/control_commands/README_ENG.md) descrivono timestamp, scadenze di flap/servo e indicatori e disabilitazione dei controlli quando lo stato è vecchio.
+
+La [validità dei sensori elaborati](docs/control_commands/README.md#validità-dei-sensori-elaborati) è distinta dal timestamp dell’aggregato: dashboard, mappa e meccatronica rispettano i flag delle singole sorgenti.
+
+La meccatronica usa un solo messaggio MQTT con `header` esterno e `indicators` annidato con header originale del PID. Il vecchio topic separato degli indicatori non è più sottoscritto. Il formato richiede l’aggiornamento coordinato di ROS, gateway e frontend.

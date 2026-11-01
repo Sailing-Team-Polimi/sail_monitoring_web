@@ -27,6 +27,8 @@ export class MapComponent implements OnInit, OnDestroy {
   readonly commands = inject(CommandService);
   private readonly destroyRef = inject(DestroyRef);
   ngOnDestroy(): void { this.mapService.getMap()?.remove(); }
+  public windFresh = false;
+  public headingFresh = false;
   public twd: number = 0;
   public tws: number = 0;
   mqttState$: Observable<MqttConnectionStateMessage>;
@@ -66,6 +68,7 @@ export class MapComponent implements OnInit, OnDestroy {
   private setupMapDataSubscription(): void {
     this.mapService.getMapDataStream().pipe(takeUntilDestroyed(this.destroyRef)).subscribe((data: MapData | null) => {
       if (!data) {
+        this.windFresh = false; this.headingFresh = false;
         this.currentLat = null; this.currentLon = null; this.dtl = null; this.ttl = null;
         this.gpsState = 0; this.gpsSigma = null; this.gpsFallback = false;
         this.mapService.setBoatPositionUnavailable(); return;
@@ -75,6 +78,8 @@ export class MapComponent implements OnInit, OnDestroy {
       this.gpsFallback = data.gps_covariance_fallback;
       this.currentLat = data.position_valid ? data.lat : null;
       this.currentLon = data.position_valid ? data.lon : null;
+      this.windFresh = data.wind_fresh === true;
+      this.headingFresh = data.imu_fresh === true;
       this.twd = data.twd;
       this.tws = data.tws;
       
@@ -82,7 +87,7 @@ export class MapComponent implements OnInit, OnDestroy {
       this.ttl = data.ttl;
 
       if (data.position_valid) {
-        this.mapService.updateBoatPosition(data.lat, data.lon, data.yaw);
+        this.mapService.updateBoatPosition(data.lat, data.lon, this.headingFresh ? data.yaw : null);
         this.mapService.setBoatPredicted(data.gps_state === 2);
       } else {
         this.mapService.setBoatPositionUnavailable();
@@ -104,7 +109,7 @@ export class MapComponent implements OnInit, OnDestroy {
       }
 
       // --- DISEGNO TRAIETTORIA ---
-      if (this.ttl !== -1 && this.ttl !== null && 
+      if (this.headingFresh && this.ttl !== -1 && this.ttl !== null &&
           this.comitatoCoordinates && this.pinCoordinates && 
           this.currentLat !== null && this.currentLon !== null) {
         

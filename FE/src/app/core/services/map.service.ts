@@ -103,7 +103,11 @@ export class MapService {
     this.buoyMarkers.forEach(marker => marker.addTo(this.map));
   }
 
-  updateBoatPosition(lat: number, lon: number, yaw: number = 0): void {
+  updateBoatPosition(lat: number, lon: number, yaw: number | null = null): void {
+    const icon = yaw === null ? L.divIcon({
+      className: '', html: '<span style="display:block;width:14px;height:14px;border-radius:50%;background:#38bdf8;border:2px solid white"></span>',
+      iconSize: [18, 18], iconAnchor: [9, 9],
+    }) : this.boatIcon;
     const position = L.latLng(lat, lon);
     this.boatPath.push(position);
     if (this.boatPath.length > 10000) this.boatPath.shift();
@@ -114,13 +118,14 @@ export class MapService {
 
     if (!this.boatMarker) {
       this.boatMarker = L.marker(position, {
-        icon: this.boatIcon,
-        rotationAngle: yaw,
+        icon,
+        rotationAngle: yaw ?? 0,
         rotationOrigin: 'center center'
       } as any).addTo(this.map);
     } else {
+      this.boatMarker.setIcon(icon);
       this.boatMarker.setLatLng(position);
-      (this.boatMarker as any).setRotationAngle(yaw);
+      (this.boatMarker as any).setRotationAngle(yaw ?? 0);
     }
   }
 

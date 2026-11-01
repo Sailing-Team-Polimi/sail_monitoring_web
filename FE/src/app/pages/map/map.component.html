@@ -4,7 +4,7 @@
     <div class="map-inner-container">
 
       <div class="wind-overlay">
-        <svg xmlns="http://www.w3.org/2000/svg"
+        <svg *ngIf="windFresh" xmlns="http://www.w3.org/2000/svg"
              class="wind-icon"
              [style.transform]="'rotate(' + ((twd + 180) % 360) + 'deg)'"
              fill="currentColor"
@@ -12,7 +12,7 @@
           <path d="M12 2l7 7h-4v9h-6V9H5l7-7z" />
         </svg>
         <span class="wind-text">
-          {{ tws }} kn
+          {{ windFresh ? (tws + ' kn') : 'Vento non disponibile' }}
         </span>
       </div>
 
@@ -37,6 +37,7 @@
       } @else {
         <p>Posizione non disponibile o troppo incerta</p>
       }
+      @if (!headingFresh) { <p>Orientamento non disponibile</p> }
       @if (gpsSigma !== null) {
         <p>Incertezza stimata: {{ gpsSigma | number:'1.0-1' }} m (1 sigma)</p>
       }

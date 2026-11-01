@@ -20,8 +20,8 @@ export class CommandService {
     this.tick();
     return this.role() === AuthRoles.Admin && this.state().status === MqttConnectionState.CONNECTED && this.mqtt.fresh(topic);
   }
-  readonly canUpdate = computed(() => this.available(TOPICS.indicators));
-  readonly canTest = computed(() => this.available(TOPICS.mechatronics));
+  readonly canUpdate = computed(() => this.available(TOPICS.mechatronics) && this.mqtt.indicatorsFresh());
+  readonly canTest = computed(() => this.available(TOPICS.mechatronics) && this.mqtt.indicatorsFresh());
   readonly canSetMark = computed(() => this.available(TOPICS.map) &&
     this.map()?.position_valid === true && this.map()?.gps_state === 1);
   readonly canStart = computed(() => {

@@ -17,6 +17,19 @@ function recordingSample(data: Record<string, unknown>, ms = Date.now()) {
   return {...data, header: {stamp: {sec: Math.floor(ms / 1000), nanosec: (ms % 1000) * 1e6}, frame_id: ''}};
 }
 
+let sourceSequence = 0;
+function mechSample(data: Record<string, unknown> = {}) {
+  return {header: {stamp: {sec: 1, nanosec: ++sourceSequence}, frame_id: ''},
+    servo_limit_max: 74, servo_limit_min: 0, kp: 26, ki: 1, kd: 0,
+    current_height_est_wand: 0.5, current_height_est_ultrasound: 0.5, height_target: 0.5,
+    flap_angle_out: 0, servo_angle_out: 0, roll: 0, pitch: 0, wand_angle: 0, ...data};
+}
+function controlSample(data: Record<string, unknown>, remaining = {indicators: 2000}) {
+  return {...mechSample(), indicators_fresh: true,
+    indicators: {...data, header: {stamp: {sec: 1, nanosec: ++sourceSequence}, frame_id: ''}},
+    control_freshness: {sent_at_unix_ms: Date.now(), remaining_ms: remaining}};
+}
+
 class FakeClient extends EventEmitter {
   connected = false;
   options: IClientOptions;
@@ -266,7 +279,7 @@ test('logout clears credentials, pending requests and all cached boat data', asy
 test('indicator commands obey fresh boat capability flags and use unqueued QoS 0', async t => {
   const {session, login} = setup(t);
   const client = await login();
-  client.message(TOPICS.indicators, {indicators: [{indicator: 'KP', value: 1, failed: false, can_increase: false, can_decrease: true}]});
+  client.message(TOPICS.mechatronics, controlSample({indicators: [{indicator: 'KP', value: 1, failed: false, can_increase: false, can_decrease: true}]}));
   session.send(commands.update(IndicatorType.KP, MethodType.INCREASE));
   assert.equal(client.published.length, 0);
   session.send(commands.update(IndicatorType.KP, MethodType.DECREASE));
@@ -280,16 +293,16 @@ test('a failed active height source can be switched, but stale or unknown state 
   const {session, login} = setup(t);
   const client = await login();
   const change = commands.update(IndicatorType.ACTIVE_SENSOR, MethodType.CHANGE);
-  client.message(TOPICS.indicators, {indicators: [{indicator: 'ACTIVE_SENSOR', value: 1,
-    failed: true, can_increase: true, can_decrease: true}]});
+  client.message(TOPICS.mechatronics, controlSample({indicators: [{indicator: 'ACTIVE_SENSOR', value: 1,
+    failed: true, can_increase: true, can_decrease: true}]}));
   assert.equal(session.canCommand(change), true);
   session.send(change);
   assert.deepEqual(client.published[0].payload, {indicator: 'ACTIVE_SENSOR', method: 'CHANGE'});
-  client.message(TOPICS.indicators, {indicators: [{indicator: 'ACTIVE_SENSOR', value: 99,
-    failed: true, can_increase: true}]});
+  client.message(TOPICS.mechatronics, controlSample({indicators: [{indicator: 'ACTIVE_SENSOR', value: 99,
+    failed: true, can_increase: true}]}));
   assert.equal(session.canCommand(change), false);
-  client.message(TOPICS.indicators, {indicators: [{indicator: 'ACTIVE_SENSOR', value: 0,
-    failed: false, can_increase: true}]});
+  client.message(TOPICS.mechatronics, controlSample({indicators: [{indicator: 'ACTIVE_SENSOR', value: 0,
+    failed: false, can_increase: true}]}));
   t.mock.timers.tick(APP_CONFIG.dataTimeoutMs + 1);
   assert.equal(session.canCommand(change), false);
 });
@@ -453,4 +466,73 @@ test('invalid clock tolerance configuration is rejected before starting a sessio
     assert.throws(() => new MqttSession(() => {throw new Error('No connection expected');},
       {...APP_CONFIG, recordingClockSkewToleranceMs: value}), /Tolleranza/);
   }
+});
+
+test('indicator source validity expires despite MQTT duplicates and unrelated traffic', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  const change = commands.update(IndicatorType.KP, MethodType.INCREASE);
+  const sample = controlSample({indicators: [{indicator: 'KP', value: 1, failed: false, can_increase: true}]});
+  client.message(TOPICS.mechatronics, sample);
+  assert.equal(session.canCommand(change), true);
+  t.mock.timers.tick(1500);
+  client.message(TOPICS.mechatronics, {...sample, header: mechSample().header,
+    control_freshness: {sent_at_unix_ms: Date.now(), remaining_ms: {indicators: 2000}}});
+  t.mock.timers.tick(501);
+  assert.equal(session.canCommand(change), false);
+});
+
+test('delayed indicator state and messages without a source header cannot enable commands', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  const data = {indicators: [{indicator: 'KP', value: 1, failed: false, can_increase: true}]};
+  const sample = controlSample(data);
+  t.mock.timers.tick(2001);
+  client.message(TOPICS.mechatronics, sample);
+  assert.equal(session.indicators$.value, null);
+  client.message(TOPICS.mechatronics, {...mechSample(), indicators: data, indicators_fresh: true,
+    control_freshness: controlSample(data).control_freshness});
+  assert.equal(session.indicators$.value, null);
+  client.message(TOPICS.mechatronics, controlSample(data));
+  assert.equal(session.canCommand(commands.update(IndicatorType.KP, MethodType.INCREASE)), true);
+});
+
+test('cached mechatronics controls expire independently and fresh sensor traffic cannot revive them', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  const data = {header: mechSample().header, indicators: controlSample({indicators: []}).indicators, servo_limit_max: 74, servo_limit_min: 0,
+    kp: 26, ki: 1, kd: 0, current_height_est_wand: 0.5, current_height_est_ultrasound: 0.5,
+    height_target: 0.5, flap_angle_out: 0, servo_angle_out: 0, roll: 0, pitch: 0, wand_angle: 0,
+    flap_command_fresh: true, servo_command_fresh: true, indicators_fresh: true};
+  const sample = {...data, control_freshness: {sent_at_unix_ms: Date.now(),
+    remaining_ms: {flap: 300, servo: 1000, indicators: 2000}}};
+  client.message(TOPICS.mechatronics, sample);
+  assert.equal(session.mechatronics$.value?.flap_command_fresh, true);
+  t.mock.timers.tick(500);
+  assert.equal(session.mechatronics$.value?.flap_command_fresh, false);
+  assert.equal(session.mechatronics$.value?.servo_command_fresh, true);
+  client.message(TOPICS.mechatronics, sample); // reordered transport cannot refresh anything
+  assert.equal(session.mechatronics$.value?.flap_command_fresh, false);
+  t.mock.timers.tick(500);
+  assert.equal(session.mechatronics$.value?.servo_command_fresh, false);
+  client.message(TOPICS.mechatronics, {...data, header: mechSample().header, flap_command_fresh: false, servo_command_fresh: false,
+    control_freshness: {sent_at_unix_ms: Date.now(), remaining_ms: {flap: 0, servo: 0, indicators: 1000}}});
+  assert.equal(session.mechatronics$.value?.flap_command_fresh, false);
+  t.mock.timers.tick(1000);
+  assert.equal(session.mechatronics$.value?.indicators_fresh, false);
+});
+
+test('one mechatronics packet updates values and button state without an indicators subscription', async t => {
+  const {session, login} = setup(t);
+  const client = await login();
+  assert.equal(client.subscriptions.includes('sail_gui/data/indicators'), false);
+  const sample = controlSample({indicators: [{indicator: 'KP', value: 26, failed: false, can_increase: true}]});
+  client.message(TOPICS.mechatronics, sample);
+  assert.equal(session.mechatronics$.value?.kp, 26);
+  assert.equal(session.indicators$.value?.KP.value, 26);
+  assert.equal(session.canCommand(commands.update(IndicatorType.KP, MethodType.INCREASE)), true);
+  client.message(TOPICS.mechatronics, {...sample, header: mechSample().header, indicators_fresh: false});
+  assert.equal(session.indicators$.value, null);
+  assert.equal(session.mechatronics$.value?.indicators_fresh, false);
+  assert.equal(session.canCommand(commands.update(IndicatorType.KP, MethodType.INCREASE)), false);
 });

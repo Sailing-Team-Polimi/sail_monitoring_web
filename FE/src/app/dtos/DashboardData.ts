@@ -2,6 +2,10 @@
 import type { TimeStamp } from "./common/TimeStamp";
 
 export interface DashboardData {
+    imu_fresh?: boolean;
+    velocity_fresh?: boolean;
+    wind_fresh?: boolean;
+
     stamp: TimeStamp
     roll: number;
     pitch: number;

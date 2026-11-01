@@ -23,16 +23,16 @@ export class DashboardService implements OnDestroy {
       .subscribe((data: DashboardData | null) => {
         if (!data) { this.snapshotSubject.next({}); return; }
         
-        // Creiamo l'oggetto direttamente, forzando failed a false
+        // I flag delle sorgenti impediscono di mostrare valori memorizzati come validi.
         const mappedData: Record<string, any> = {
-          [SensorType.ROLL]: { value: data.roll, unit: SensorUnitMap[SensorType.ROLL], failed: false },
-          [SensorType.PITCH]: { value: data.pitch, unit: SensorUnitMap[SensorType.PITCH], failed: false },
-          [SensorType.YAW]: { value: data.yaw, unit: SensorUnitMap[SensorType.YAW], failed: false },
-          [SensorType.SOG]: { value: data.sog, unit: SensorUnitMap[SensorType.SOG], failed: false },
-          [SensorType.VMG]: { value: data.vmg, unit: SensorUnitMap[SensorType.VMG], failed: false },
-          [SensorType.TWA]: { value: data.twa, unit: SensorUnitMap[SensorType.TWA], failed: false },
-          [SensorType.TWD]: { value: data.twd, unit: SensorUnitMap[SensorType.TWD], failed: false },
-          [SensorType.TWS]: { value: data.tws, unit: SensorUnitMap[SensorType.TWS], failed: false }
+          [SensorType.ROLL]: { value: data.roll, unit: SensorUnitMap[SensorType.ROLL], failed: data.imu_fresh !== true },
+          [SensorType.PITCH]: { value: data.pitch, unit: SensorUnitMap[SensorType.PITCH], failed: data.imu_fresh !== true },
+          [SensorType.YAW]: { value: data.yaw, unit: SensorUnitMap[SensorType.YAW], failed: data.imu_fresh !== true },
+          [SensorType.SOG]: { value: data.sog, unit: SensorUnitMap[SensorType.SOG], failed: data.velocity_fresh !== true },
+          [SensorType.VMG]: { value: data.vmg, unit: SensorUnitMap[SensorType.VMG], failed: data.wind_fresh !== true },
+          [SensorType.TWA]: { value: data.twa, unit: SensorUnitMap[SensorType.TWA], failed: data.wind_fresh !== true },
+          [SensorType.TWD]: { value: data.twd, unit: SensorUnitMap[SensorType.TWD], failed: data.wind_fresh !== true },
+          [SensorType.TWS]: { value: data.tws, unit: SensorUnitMap[SensorType.TWS], failed: data.wind_fresh !== true }
         };
 
         this.snapshotSubject.next(mappedData);

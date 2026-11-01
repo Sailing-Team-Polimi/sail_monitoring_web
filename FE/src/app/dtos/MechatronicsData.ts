@@ -3,7 +3,13 @@ import type { TimeStamp } from "./common/TimeStamp";
 import type { TripleUltrasound } from "./sensor/TripleUltrasound";
 
 export interface MechatronicsData {
-    stamp: TimeStamp
+    imu_fresh?: boolean;
+    wand_fresh?: boolean;
+    height_wand_fresh?: boolean;
+    height_ultrasound_fresh?: boolean;
+
+    header: {stamp: TimeStamp; frame_id: string};
+    indicators: unknown;
 
     // COLONNA SINISTRA
     servo_limit_max: number;
@@ -19,6 +25,9 @@ export interface MechatronicsData {
     ultrasound_fresh: boolean;
     height_target: number;
     flap_angle_out: number;
+    flap_command_fresh?: boolean;
+    servo_command_fresh?: boolean;
+    indicators_fresh?: boolean;
 
     // COLONNA DESTRA
     servo_angle_out: number;

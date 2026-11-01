@@ -6,7 +6,7 @@ import { ultrasoundReadings } from '../src/app/dtos/sensor/TripleUltrasound';
 const stamp = {sec: 10, nanosec: 0};
 const sample = {stamp, sequence_id: 42, left_mm: 720, center_mm: 65535, right_mm: 735,
   left_valid: true, center_valid: false, right_valid: true};
-const telemetry = {stamp, servo_limit_max: 74, servo_limit_min: 0, kp: 26, ki: 1, kd: 0,
+const telemetry = {header: {stamp, frame_id: ''}, servo_limit_max: 74, servo_limit_min: 0, kp: 26, ki: 1, kd: 0,
   current_height_est_wand: 0.5, current_height_est_ultrasound: 0.5, height_target: 0.5,
   flap_angle_out: 0, servo_angle_out: 0, roll: 0, pitch: 0, wand_angle: 0,
   ultrasound: sample, ultrasound_fresh: true};
